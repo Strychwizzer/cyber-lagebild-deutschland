@@ -1,0 +1,996 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cyber-Lagebild Deutschland</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#060818; --bg2:#0a0f22; --card:#0e1726; --card2:#111c2f; --muted:#181e2e;
+  --border:#ffffff14; --border-solid:#1b2e4b;
+  --fg:#e0e6ed; --fg-muted:#94a3b8; --fg-dim:#64748b;
+  --accent:#26ae7f; --accent2:#2aebcb; --accent-soft:#26ae7f1f;
+  --crit:#e7515a; --high:#f59e0b; --mid:#eab308; --low:#38bdf8;
+  --violet:#8b5cf6; --blue:#4361ee;
+  --radius:14px; --side:248px;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+body{background:
+  radial-gradient(900px 500px at 85% -10%,#2aebcb14,transparent 60%),
+  radial-gradient(700px 400px at 10% 0%,#26ae7f12,transparent 60%),var(--bg);min-height:100vh}
+a{color:var(--accent2);text-decoration:none}
+a:hover{text-decoration:underline}
+button,input,select{font:inherit;color:inherit}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- Sidebar ---------- */
+.side{position:fixed;inset:0 auto 0 0;width:var(--side);background:#0b1120e6;backdrop-filter:blur(8px);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:18px 14px;z-index:20}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px 20px}
+.brand svg{flex:none}
+.brand b{font-weight:800;font-size:17px;letter-spacing:-.02em}
+.brand b span{color:var(--accent2)}
+.brand small{display:block;color:var(--fg-dim);font-size:11px;margin-top:-2px}
+.nav-l{color:var(--fg-dim);font-size:11px;text-transform:uppercase;letter-spacing:.08em;padding:10px 10px 6px}
+.nav a{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;color:var(--fg-muted);font-weight:500}
+.nav a:hover{background:var(--muted);color:var(--fg);text-decoration:none}
+.nav a.on{background:var(--accent-soft);color:var(--accent2)}
+.nav a .cnt{margin-left:auto;font-size:11px;background:var(--muted);color:var(--fg-muted);padding:1px 7px;border-radius:99px}
+.side .status{margin-top:auto;background:var(--card);border:1px solid var(--border-solid);border-radius:12px;padding:12px;font-size:12px;color:var(--fg-muted)}
+.status .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px #26ae7f2b;margin-right:6px;animation:pulse 2s infinite}
+.status.snap .dot{background:var(--high);box-shadow:0 0 0 4px #f59e0b2b}
+@keyframes pulse{50%{box-shadow:0 0 0 7px #26ae7f00}}
+
+/* ---------- Main ---------- */
+main{margin-left:var(--side);padding:0 28px 40px}
+.top{position:sticky;top:0;z-index:15;display:flex;align-items:center;gap:14px;padding:16px 0;background:linear-gradient(var(--bg) 70%,transparent)}
+.top h1{font-size:22px;margin:0;font-weight:800;letter-spacing:-.02em}
+.top h1 em{font-style:normal;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.top .sub{color:var(--fg-dim);font-size:12px}
+.top .grow{flex:1}
+.search{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border-solid);border-radius:10px;padding:7px 10px;width:280px}
+.search input{background:none;border:0;outline:0;width:100%}
+.kbd{white-space:nowrap;font-size:11px;color:var(--fg-dim);border:1px solid var(--border-solid);border-radius:5px;padding:0 5px}
+.clock{font-family:var(--mono);color:var(--fg-muted);font-size:13px;min-width:74px;text-align:right}
+.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border-solid);background:var(--card);border-radius:10px;padding:8px 12px;cursor:pointer;font-weight:600;font-size:13px}
+.btn:hover{border-color:#2b4570}
+.btn.primary{border:0;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#04140e}
+.btn.on{background:var(--accent-soft);color:var(--accent2);border-color:#26ae7f66}
+
+/* ---------- Cards ---------- */
+.grid{display:grid;gap:18px}
+.kpis{grid-template-columns:repeat(5,1fr)}
+.card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--border-solid);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden}
+.card h3{margin:0 0 2px;font-size:14px;font-weight:600}
+.card .hint{color:var(--fg-dim);font-size:12px}
+.card-h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+.kpi .lbl{color:var(--fg-muted);font-size:12px;font-weight:500;display:flex;align-items:center;gap:8px}
+.kpi .ico{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent2)}
+.kpi .val{font-size:32px;font-weight:800;letter-spacing:-.03em;margin:10px 0 2px}
+.kpi .foot{font-size:12px;color:var(--fg-dim)}
+.up{color:var(--crit);font-weight:600}.down{color:var(--accent);font-weight:600}
+.kpi .spark{position:absolute;right:0;bottom:0;opacity:.55}
+.kpi.red .ico{background:#e7515a1f;color:var(--crit)}
+.kpi.amber .ico{background:#f59e0b1f;color:var(--high)}
+.kpi.violet .ico{background:#8b5cf61f;color:#a78bfa}
+
+/* Ticker */
+.ticker{display:flex;align-items:center;gap:0;background:var(--card);border:1px solid var(--border-solid);border-radius:12px;overflow:hidden;margin:18px 0}
+.ticker .tag{flex:none;background:#e7515a1a;color:var(--crit);font-weight:700;font-size:12px;padding:10px 14px;display:flex;align-items:center;gap:8px;border-right:1px solid var(--border-solid);letter-spacing:.04em}
+.ticker .tag i{width:7px;height:7px;border-radius:50%;background:var(--crit);animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+.ticker .track{overflow:hidden;flex:1;mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent)}
+.ticker .run{display:inline-flex;gap:36px;white-space:nowrap;padding:10px 0;animation:run 110s linear infinite}
+.ticker:hover .run{animation-play-state:paused}
+.ticker .run span{color:var(--fg-muted)}
+.ticker .run b{color:var(--fg);font-weight:600}
+.ticker .run small{color:var(--fg-dim);font-family:var(--mono);margin-right:6px}
+@keyframes run{to{transform:translateX(-50%)}}
+
+.row2{grid-template-columns:2fr 1fr}
+.row3{grid-template-columns:1fr 1fr 1fr}
+section{scroll-margin-top:80px}
+.sec-h{display:flex;align-items:end;justify-content:space-between;margin:34px 0 14px;gap:16px;flex-wrap:wrap}
+.sec-h h2{margin:0;font-size:18px;font-weight:700;letter-spacing:-.01em}
+.sec-h p{margin:2px 0 0;color:var(--fg-dim);font-size:13px}
+
+/* Charts */
+svg text{fill:var(--fg-dim);font-size:11px;font-family:Inter,sans-serif}
+.bar{transition:opacity .15s}
+.bar:hover{opacity:.75}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--fg-muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.hbar{display:grid;grid-template-columns:120px 1fr 44px;align-items:center;gap:10px;margin:7px 0;font-size:13px}
+.hbar .hl{color:var(--fg-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hbar .tr{display:block;height:8px;background:var(--muted);border-radius:99px;overflow:hidden}
+.hbar .fl{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.hbar .n{text-align:right;color:var(--fg);font-weight:600}
+.donut-wrap{display:flex;align-items:center;gap:18px}
+.donut-wrap .legend{flex-direction:column;gap:8px}
+.donut-wrap .legend b{color:var(--fg);margin-left:6px}
+.big-stat{display:flex;gap:18px;margin-top:10px}
+.big-stat div{flex:1;background:var(--muted);border-radius:10px;padding:10px 12px}
+.big-stat b{display:block;font-size:20px;font-weight:800}
+.big-stat span{font-size:11px;color:var(--fg-dim)}
+#tip{position:fixed;pointer-events:none;background:#0b1120;border:1px solid var(--border-solid);padding:6px 10px;border-radius:8px;font-size:12px;z-index:99;opacity:0;transition:opacity .1s;box-shadow:0 8px 24px #0008}
+
+/* Highlight */
+.pulsecard{background:radial-gradient(400px 200px at 100% 0%,#e7515a22,transparent 70%),linear-gradient(180deg,var(--card2),var(--card))}
+.pulsecard .huge{font-size:44px;font-weight:800;letter-spacing:-.03em;line-height:1.05;margin:8px 0}
+.pulsecard .huge small{font-size:16px;color:var(--fg-muted);font-weight:600}
+
+/* Tables */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--border-solid);background:transparent;border-radius:99px;padding:5px 11px;font-size:12px;font-weight:600;color:var(--fg-muted);cursor:pointer}
+.chip:hover{color:var(--fg)}
+.chip.on{background:var(--accent-soft);color:var(--accent2);border-color:#26ae7f66}
+select{background:var(--card);border:1px solid var(--border-solid);border-radius:9px;padding:6px 10px}
+.tsearch{background:var(--bg2);border:1px solid var(--border-solid);border-radius:9px;padding:6px 10px;min-width:220px;outline:0}
+.tsearch:focus{border-color:var(--accent)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border-solid);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-weight:600;color:var(--fg-dim);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:11px 14px;background:#0b1322;border-bottom:1px solid var(--border-solid);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid #1b2e4b80;vertical-align:top}
+tbody tr{cursor:pointer;transition:background .12s}
+tbody tr:hover{background:#ffffff06}
+tbody tr:last-child td{border-bottom:0}
+td.date{font-family:var(--mono);color:var(--fg-muted);white-space:nowrap;font-size:12px}
+td.name{font-weight:600;color:var(--fg);min-width:180px}
+td.name small{display:block;font-weight:500;color:var(--fg-dim);font-size:11px}
+.blur td.name .nm{filter:blur(6px);user-select:none}
+.t{display:inline-block;font-size:11px;font-weight:600;border-radius:6px;padding:1px 7px;margin:0 4px 4px 0;background:var(--muted);color:var(--fg-muted);white-space:nowrap}
+.t.Ransomware{background:#e7515a1f;color:#f87171}
+.t.Datendiebstahl,.t.Datenleck,.t.Datenpanne{background:#8b5cf61f;color:#a78bfa}
+.t.Ausfall,.t.DDoS{background:#f59e0b1f;color:#fbbf24}
+.t.Phishing,.t.Malware,.t.Supply.Chain,.t.Sicherheitslücke{background:#38bdf81a;color:#7dd3fc}
+.sev{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:3px 9px;border-radius:7px}
+.sev.kritisch{background:#e7515a24;color:#ff6b74}
+.sev.hoch{background:#f59e0b22;color:#fbbf24}
+.sev.mittel{background:#eab3081c;color:#facc15}
+.sev.niedrig{background:#38bdf81a;color:#7dd3fc}
+.score{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px}
+.score .tr{display:block;width:54px;height:5px;background:var(--muted);border-radius:9px;overflow:hidden}
+.score .fl{display:block;height:100%;border-radius:9px}
+.cve{font-family:var(--mono);font-size:11px;color:var(--fg-muted);display:block;white-space:nowrap}
+.st{font-size:11px;font-weight:700;color:var(--accent2)}
+.st.UPDATE{color:var(--fg-dim)}
+.pager{display:flex;align-items:center;justify-content:space-between;margin-top:12px;color:var(--fg-dim);font-size:12px}
+.pager .btn{padding:5px 10px}
+.empty{padding:30px;text-align:center;color:var(--fg-dim)}
+
+/* Modal */
+.modal{position:fixed;inset:0;background:#02040cb3;backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal.open{display:flex}
+.modal .box{background:var(--card);border:1px solid var(--border-solid);border-radius:16px;max-width:560px;width:100%;padding:24px;box-shadow:0 20px 60px #000a}
+.modal h3{margin:0 0 4px;font-size:20px}
+.modal dl{display:grid;grid-template-columns:110px 1fr;gap:8px 14px;margin:18px 0}
+.modal dt{color:var(--fg-dim);font-size:12px}
+.modal dd{margin:0}
+.x{float:right;background:none;border:0;font-size:22px;color:var(--fg-dim);cursor:pointer;line-height:1}
+
+.nmb{filter:blur(8px)}
+
+/* Akteurs-Karten */
+.actorgrid{grid-template-columns:repeat(4,1fr)}
+@media (max-width:1300px){.actorgrid{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:900px){.actorgrid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.actorgrid{grid-template-columns:1fr}}
+.actor{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--border-solid);border-radius:var(--radius);padding:16px;cursor:pointer;transition:transform .15s,border-color .15s;position:relative;overflow:hidden}
+.actor:hover{transform:translateY(-3px);border-color:#2b4570}
+.actor::after{content:"Profil ansehen ›";position:absolute;right:14px;bottom:12px;font-size:11px;color:var(--accent2);opacity:0;transition:opacity .15s}
+.actor:hover::after{opacity:1}
+.actor .rank{position:absolute;top:0;right:0;font-size:11px;font-weight:700;color:var(--fg-dim);background:var(--muted);padding:3px 9px;border-bottom-left-radius:9px}
+.actor h4{margin:0 0 2px;font-size:16px;font-weight:700}
+.actor .mdl{font-size:11px;color:var(--fg-dim)}
+.actor .big{font-size:30px;font-weight:800;letter-spacing:-.03em;margin:12px 0 0;color:var(--crit)}
+.actor .big small{font-size:12px;color:var(--fg-muted);font-weight:600}
+.actor .meta{display:flex;gap:12px;margin-top:8px;font-size:11px;color:var(--fg-dim);flex-wrap:wrap}
+.actor .trend{margin-top:10px;height:30px}
+.actor.inactive .big{color:var(--fg-muted)}
+.actor .lbl-act{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:5px;background:#26ae7f1f;color:var(--accent2);margin-left:6px}
+.actor .lbl-act.off{background:var(--muted);color:var(--fg-dim)}
+
+/* Profil-Modal (groß) */
+.modal .box.wide{max-width:860px;max-height:90vh;overflow-y:auto}
+.prof-head{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.prof-head .tt{flex:1;min-width:200px}
+.prof-head h3{font-size:24px;margin:0}
+.prof-desc{color:var(--fg-muted);margin:12px 0;line-height:1.6}
+.prof-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
+.prof-stats .s{background:var(--muted);border-radius:10px;padding:10px 12px}
+.prof-stats b{display:block;font-size:20px;font-weight:800}
+.prof-stats span{font-size:11px;color:var(--fg-dim)}
+.prof-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:8px}
+@media (max-width:640px){.prof-cols,.prof-stats{grid-template-columns:1fr 1fr}}
+.prof h5{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-dim);margin:18px 0 8px;border-bottom:1px solid var(--border-solid);padding-bottom:6px}
+.minibar{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin:5px 0;font-size:12px}
+.minibar .tr{height:6px;background:var(--muted);border-radius:9px;overflow:hidden}
+.minibar .fl{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.minibar.c .fl{background:linear-gradient(90deg,#f59e0b,#e7515a)}
+.toolcat{margin:8px 0}
+.toolcat .ct{font-size:11px;color:var(--fg-dim);margin-bottom:3px}
+.toolcat .tg{display:inline-block;font-size:11px;font-family:var(--mono);background:var(--muted);border-radius:6px;padding:2px 7px;margin:0 4px 4px 0}
+/* ATT&CK Kette */
+.ttps{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.ttp-row{background:var(--bg2);border:1px solid var(--border-solid);border-radius:10px;overflow:hidden}
+.ttp-row summary{list-style:none;cursor:pointer;padding:10px 12px;display:flex;align-items:center;gap:10px;font-size:13px}
+.ttp-row summary::-webkit-details-marker{display:none}
+.ttp-row summary .ph{width:26px;height:26px;border-radius:7px;background:var(--accent-soft);color:var(--accent2);display:grid;place-items:center;font-weight:700;font-size:12px;flex:none}
+.ttp-row summary .de{font-weight:600}
+.ttp-row summary .en{color:var(--fg-dim);font-size:11px}
+.ttp-row summary .cnt2{margin-left:auto;font-size:11px;color:var(--fg-dim)}
+.ttp-body{padding:0 12px 12px 48px}
+.ttp-body .ex{color:var(--fg-muted);font-size:12px;margin:0 0 10px}
+.ttp-tech{display:flex;flex-wrap:wrap;gap:6px}
+.ttp-tech .tc{font-size:11px;background:var(--muted);border-radius:6px;padding:2px 8px;color:var(--fg-muted);cursor:help}
+.protect{background:#26ae7f12;border:1px solid #26ae7f33;border-radius:10px;padding:12px 14px;margin-top:14px;font-size:13px;color:var(--fg-muted)}
+.protect b{color:var(--accent2)}
+.vlist{display:flex;flex-direction:column;gap:4px}
+.vlist .v{display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:5px 0;border-bottom:1px solid #1b2e4b66}
+.vlist .v span{color:var(--fg-dim);font-family:var(--mono);white-space:nowrap}
+
+footer{margin-top:40px;color:var(--fg-dim);font-size:12px;border-top:1px solid var(--border-solid);padding-top:18px;display:flex;gap:24px;flex-wrap:wrap;justify-content:space-between}
+.dropzone{border:1px dashed #2b4570;border-radius:12px;padding:14px 16px;color:var(--fg-muted);font-size:13px}
+
+/* Präsentationsmodus */
+body.present{--side:0px}
+body.present .side{display:none}
+body.present main{padding:0 40px 40px}
+body.present .kpi .val{font-size:40px}
+body.present .top .search{display:none}
+
+@media (max-width:1300px){.kpis{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:1000px){.row2,.row3{grid-template-columns:1fr}.side{display:none}main{margin-left:0;padding:0 16px 30px}.kpis{grid-template-columns:repeat(2,1fr)}.search{display:none}}
+@media (max-width:560px){.kpis{grid-template-columns:1fr}.top h1{font-size:18px}}
+</style>
+</head>
+<body>
+
+<aside class="side">
+  <div class="brand">
+    <svg width="34" height="34" viewBox="0 0 34 34" fill="none"><defs><linearGradient id="lg" x1="0" y1="0" x2="34" y2="34"><stop stop-color="#26ae7f"/><stop offset="1" stop-color="#2aebcb"/></linearGradient></defs><path d="M17 2 30 7v9c0 8-5.6 13.6-13 16C9.6 29.6 4 24 4 16V7l13-5Z" fill="url(#lg)" opacity=".18" stroke="url(#lg)" stroke-width="1.6"/><path d="m11.5 17 4 4 7-8" stroke="#2aebcb" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div><b>Cyber<span>Lage</span></b><small>Lagebild Deutschland</small></div>
+  </div>
+  <div class="nav-l">Dashboard</div>
+  <nav class="nav">
+    <a href="#overview" class="on"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Übersicht</a>
+    <a href="#incidents"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>Sicherheitsvorfälle<span class="cnt" id="navInc">–</span></a>
+    <a href="#actors"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>Bedrohungsakteure<span class="cnt" id="navAct">–</span></a>
+    <a href="#kev"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m13 2-3 7h5l-3 9 8-11h-5l3-5z"/></svg>Aktiv ausgenutzt (KEV)<span class="cnt" id="navKev">–</span></a>
+    <a href="#advisories"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>Schwachstellen (CERT-Bund)<span class="cnt" id="navAdv">–</span></a>
+    <a href="#sources"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14Z"/></svg>Quellen &amp; Daten</a>
+  </nav>
+  <div class="nav-l">Demo</div>
+  <nav class="nav">
+    <a href="#" id="navPresent"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h18v12H3zM8 20h8M12 16v4"/></svg>Präsentationsmodus</a>
+    <a href="#" id="navBlur"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span id="blurLbl">Namen ausblenden</span></a>
+  </nav>
+  <div class="status" id="status"><span class="dot"></span><b id="stLbl">Daten</b><div id="stTime" style="margin-top:4px"></div></div>
+</aside>
+
+<main>
+  <header class="top">
+    <div>
+      <h1>Cyber-Lagebild <em>Deutschland</em></h1>
+      <div class="sub" id="subline">Gemeldete Sicherheitsvorfälle &amp; aktuelle Schwachstellen</div>
+    </div>
+    <div class="grow"></div>
+    <label class="search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="gsearch" placeholder="Firma, Produkt oder CVE suchen …"><span class="kbd">Ctrl K</span></label>
+    <div class="clock" id="clock"></div>
+    <button class="btn" id="btnPresent" title="Vollbild-Präsentation">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>Präsentieren</button>
+  </header>
+
+  <!-- ============ ÜBERSICHT ============ -->
+  <section id="overview">
+    <div class="grid kpis" id="kpis"></div>
+
+    <div class="ticker">
+      <div class="tag"><i></i>NEUESTE VORFÄLLE</div>
+      <div class="track"><div class="run" id="ticker"></div></div>
+    </div>
+
+    <div class="grid row2">
+      <div class="card">
+        <div class="card-h">
+          <div><h3>Gemeldete Vorfälle in Deutschland pro Monat</h3><div class="hint" id="monthHint"></div></div>
+          <div class="chips" id="rangeChips">
+            <button class="chip" data-r="12">12 M</button><button class="chip on" data-r="24">24 M</button><button class="chip" data-r="48">4 J</button><button class="chip" data-r="999">Alle</button>
+          </div>
+        </div>
+        <div id="monthChart"></div>
+      </div>
+      <div class="card pulsecard">
+        <div class="hint" style="text-transform:uppercase;letter-spacing:.08em;font-weight:600;color:#f87171">Statistisch betrachtet</div>
+        <div class="huge num" id="everyX">–</div>
+        <div style="color:var(--fg-muted)" id="everyTxt"></div>
+        <div class="big-stat">
+          <div><b class="num" id="yearsBox">–</b><span>Vorfälle pro Jahr (DE)</span></div>
+          <div><b class="num" id="cveDay">–</b><span>BSI-Meldungen / Werktag</span></div>
+        </div>
+        <div class="hint" style="margin-top:14px">Nur öffentlich bekannt gewordene Fälle – die Dunkelziffer liegt deutlich höher.</div>
+      </div>
+    </div>
+
+    <div class="grid row3" style="margin-top:18px">
+      <div class="card">
+        <div class="card-h"><div><h3>Angriffsarten</h3><div class="hint">Häufigste Kategorien aller DE-Vorfälle</div></div></div>
+        <div id="tagBars"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div><h3>Wer ist betroffen?</h3><div class="hint">Art der betroffenen Stelle</div></div></div>
+        <div id="typeDonut"></div>
+        <div class="card-h" style="margin:22px 0 8px"><div><h3>Vorfälle pro Jahr</h3></div></div>
+        <div id="yearChart"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div><h3>CERT-Bund Schwachstellen</h3><div class="hint" id="advHint"></div></div></div>
+        <div id="sevDonut"></div>
+        <div class="card-h" style="margin:22px 0 8px"><div><h3>Meldungen pro Tag</h3></div></div>
+        <div id="dayChart"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VORFÄLLE ============ -->
+  <section id="incidents">
+    <div class="sec-h">
+      <div><h2>Sicherheitsvorfälle in Deutschland</h2><p>Betroffene Unternehmen und Organisationen – Klick auf eine Zeile für Details und Quelle.</p></div>
+    </div>
+    <div class="card">
+      <div class="toolbar">
+        <input class="tsearch" id="incSearch" placeholder="Suchen (Name, Beschreibung) …">
+        <div class="chips" id="incTags"></div>
+        <div class="grow" style="flex:1"></div>
+        <select id="incType"><option value="">Alle Betroffenen</option><option>Unternehmen</option><option>Organisation</option></select>
+        <select id="incRange"><option value="30">Letzte 30 Tage</option><option value="90" selected>Letzte 90 Tage</option><option value="365">Letzte 12 Monate</option><option value="0">Alle geladenen</option></select>
+      </div>
+      <div class="tbl-wrap" id="incWrap">
+        <table><thead><tr><th>Datum</th><th>Betroffene</th><th>Vorfall</th><th>Kategorie</th><th></th></tr></thead><tbody id="incBody"></tbody></table>
+      </div>
+      <div class="pager"><span id="incInfo"></span><span><button class="btn" id="incPrev">‹ Zurück</button> <button class="btn" id="incNext">Weiter ›</button></span></div>
+    </div>
+  </section>
+
+  <!-- ============ BEDROHUNGSAKTEURE ============ -->
+  <section id="actors">
+    <div class="sec-h">
+      <div><h2>Bedrohungsakteure (Ransomware-Gruppen)</h2><p>Aktivste Gruppen gegen deutsche Ziele – Klick auf eine Karte zeigt Vorgehen, Angriffsmethoden und Schutzmaßnahmen. Quelle: ransomware.live.</p></div>
+      <div class="chips" id="actorSort">
+        <button class="chip on" data-s="de12">Letzte 12 Monate</button><button class="chip" data-s="de">Gesamt DE</button>
+      </div>
+    </div>
+    <div class="grid row2" style="margin-bottom:18px">
+      <div class="card">
+        <div class="card-h"><div><h3>Ransomware-Leaks mit DE-Bezug pro Monat</h3><div class="hint" id="rmHint"></div></div>
+          <div class="chips" id="rmRange"><button class="chip" data-r="12">12 M</button><button class="chip on" data-r="24">24 M</button><button class="chip" data-r="999">Alle</button></div></div>
+        <div id="ransomChart"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div><h3>Top-Gruppen (letzte 12 Monate)</h3><div class="hint">Anteil an deutschen Opfern</div></div></div>
+        <div id="actorBars"></div>
+      </div>
+    </div>
+    <div class="grid actorgrid" id="actorCards"></div>
+    <p class="hint" style="margin-top:12px">Hinweis: „Opfer" sind auf Leak-Seiten der Gruppen veröffentlichte Organisationen. Namen und Methoden stammen von ransomware.live; die Methoden-Beschreibungen folgen dem öffentlichen MITRE-ATT&CK-Framework und dienen der Awareness.</p>
+  </section>
+
+  <!-- ============ SCHWACHSTELLEN ============ -->
+  <section id="advisories">
+    <div class="sec-h">
+      <div><h2>Aktuelle Schwachstellen – CERT-Bund Kurzinformationen</h2><p>Sicherheitshinweise des BSI Warn- und Informationsdienstes (WID) mit zugehörigen CVEs.</p></div>
+    </div>
+    <div class="card">
+      <div class="toolbar">
+        <input class="tsearch" id="advSearch" placeholder="Produkt, Hersteller oder CVE …">
+        <div class="chips" id="advSev">
+          <button class="chip on" data-s="">Alle</button><button class="chip" data-s="kritisch">Kritisch</button><button class="chip" data-s="hoch">Hoch</button><button class="chip" data-s="mittel">Mittel</button><button class="chip" data-s="niedrig">Niedrig</button>
+        </div>
+        <div style="flex:1"></div>
+        <select id="advStatus"><option value="">Neu &amp; Updates</option><option value="NEU">Nur neue</option></select>
+      </div>
+      <div class="tbl-wrap">
+        <table><thead><tr><th>Schweregrad</th><th>Score</th><th>Titel</th><th>CVE</th><th>Status</th><th>Veröffentlicht</th></tr></thead><tbody id="advBody"></tbody></table>
+      </div>
+      <div class="pager"><span id="advInfo"></span><span><button class="btn" id="advPrev">‹ Zurück</button> <button class="btn" id="advNext">Weiter ›</button></span></div>
+    </div>
+  </section>
+
+  <!-- ============ KEV / AKTIV AUSGENUTZT ============ -->
+  <section id="kev">
+    <div class="sec-h">
+      <div><h2>Aktiv ausgenutzte Schwachstellen (CISA KEV)</h2><p>Lücken, die nachweislich bei echten Angriffen ausgenutzt werden – mit Kennzeichnung, worüber sich <b>Ransomware</b> verbreitet. Quelle: CISA Known Exploited Vulnerabilities.</p></div>
+    </div>
+    <div class="grid kpis" id="kevKpis" style="grid-template-columns:repeat(4,1fr)"></div>
+    <div class="grid row2" style="margin:18px 0">
+      <div class="card">
+        <div class="card-h"><div><h3>Von Ransomware genutzte Lücken – nach Hersteller</h3><div class="hint">Top-Produkte, über die Ransomware eindringt</div></div></div>
+        <div id="kevVendors"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div><h3>Neu aufgenommen pro Jahr</h3><div class="hint">Gesamt vs. von Ransomware genutzt</div></div></div>
+        <div id="kevYears"></div>
+        <div class="legend" style="margin-top:10px"><span><i style="background:#2aebcb"></i>Alle KEV</span><span><i style="background:#e7515a"></i>davon Ransomware</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="toolbar">
+        <input class="tsearch" id="kevSearch" placeholder="CVE, Hersteller oder Produkt …">
+        <div class="chips" id="kevFilter">
+          <button class="chip on" data-f="ransom">Nur Ransomware</button><button class="chip" data-f="all">Alle KEV</button>
+        </div>
+        <div style="flex:1"></div>
+        <span class="hint" id="kevStand"></span>
+      </div>
+      <div class="tbl-wrap">
+        <table><thead><tr><th>CVE</th><th>Hersteller / Produkt</th><th>Schwachstelle</th><th>Ransomware</th><th>Aufgenommen</th></tr></thead><tbody id="kevBody"></tbody></table>
+      </div>
+      <div class="pager"><span id="kevInfo"></span><span><button class="btn" id="kevPrev">‹ Zurück</button> <button class="btn" id="kevNext">Weiter ›</button></span></div>
+    </div>
+  </section>
+
+  <!-- ============ QUELLEN ============ -->
+  <section id="sources">
+    <div class="sec-h"><div><h2>Quellen &amp; Datenstand</h2><p>Alle Angaben stammen aus öffentlich zugänglichen Quellen.</p></div></div>
+    <div class="grid row2">
+      <div class="card">
+        <h3>Datenquellen</h3>
+        <p style="color:var(--fg-muted);margin:8px 0">
+          <b>Sicherheitsvorfälle:</b> <a href="https://www.security-incidents.de/sicherheitsvorfall-datenbank/" target="_blank" rel="noopener">security-incidents.de – Sicherheitsvorfall-Datenbank</a> (Holzhofer Consulting). Die Datenbank sammelt öffentlich berichtete Hackerangriffe, Ransomware-Fälle und Datenpannen. Viele kleinere Betroffene sind dort bereits anonymisiert (z.&nbsp;B. „IT-Dienstleister“).<br><br>
+          <b>Schwachstellen:</b> <a href="https://wid.cert-bund.de/portal/wid/kurzinformationen" target="_blank" rel="noopener">BSI CERT-Bund – Warn- und Informationsdienst (WID)</a>, öffentliche Kurzinformationen.<br><br>
+          <b>Ransomware-Gruppen &amp; Opfer:</b> <a href="https://www.ransomware.live/" target="_blank" rel="noopener">ransomware.live</a> – überwacht die Leak-Seiten der Ransomware-Gruppen. Methoden/TTPs nach <a href="https://attack.mitre.org/" target="_blank" rel="noopener">MITRE ATT&amp;CK</a>, Crocodyli und der Ransomware-Tool-Matrix.<br><br>
+          <b>Chronik benannter Fälle:</b> <a href="https://www.security-insider.de/cyberangriffe-auf-deutsche-unternehmen-2026-aktuell-a-a5a23f3399455167641a185a6f28549b/" target="_blank" rel="noopener">Security-Insider – „Cyberangriffe auf Unternehmen in Deutschland 2026"</a> (Vogel IT-Medien).<br><br>
+          <b>Aktiv ausgenutzte Lücken:</b> <a href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog" target="_blank" rel="noopener">CISA Known Exploited Vulnerabilities (KEV)</a> – Schwachstellen mit nachgewiesener Ausnutzung, inkl. Kennzeichnung zur Ransomware-Nutzung.
+        </p>
+        <p class="hint" id="dataStand"></p>
+      </div>
+      <div class="card">
+        <h3>Daten aktualisieren</h3>
+        <p style="color:var(--fg-muted);margin:8px 0 12px">Doppelklick auf <code>aktualisieren.bat</code> (Windows) bzw. <code>python3 update_data.py</code> – danach diese Seite neu laden (F5).</p>
+        <div class="dropzone" id="drop">Falls das Skript blockiert wird (Bot-Schutz): JSON-Datei hierher ziehen oder <a href="#" id="pick">auswählen</a>. Links im Browser öffnen, per Rechtsklick → „Speichern unter" sichern:
+          <a href="https://www.security-incidents.de/sicherheitsvorfall-datenbank/?cmd=getIncidents" target="_blank" rel="noopener">Vorfälle</a>,
+          <a href="https://wid.cert-bund.de/content/public/securityAdvisory?size=1000&sort=published%2Cdesc&aboFilter=false" target="_blank" rel="noopener">CERT-Bund</a>,
+          <a href="https://api.ransomware.live/v2/countryvictims/DE" target="_blank" rel="noopener">ransomware.live (DE)</a>,
+          <a href="https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json" target="_blank" rel="noopener">CISA KEV</a>. Mehrere Dateien gleichzeitig möglich.
+          <input type="file" id="file" accept=".json,application/json" multiple hidden></div>
+      </div>
+    </div>
+    <footer><span>Cyber-Lagebild Deutschland · lokale Demo-Ansicht</span><span>Angaben ohne Gewähr · Daten © jeweilige Quelle</span></footer>
+  </section>
+</main>
+
+<div class="modal" id="modal"><div class="box" id="mbox"></div></div>
+<div id="tip"></div>
+
+<script src="data.js"></script>
+<script src="data_ransomware.js"></script>
+<script src="data_actors.js"></script>
+<script src="data_knowledge.js"></script>
+<script src="data_secinsider.js"></script>
+<script src="data_kev.js"></script>
+<script>
+"use strict";
+/* ------------------------------------------------------------------ Daten */
+const D = window.SECDASH || {history:{monthDE:{},tagsDE:{},typesDE:{},countries:{}},incidents:[],advisories:[],advisoryStats:{cls:{},perDay:{}}};
+let INC = [], ADV = [];
+const fmtN = n => (n ?? 0).toLocaleString("de-DE");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const dDE = s => s ? `${s.slice(8,10)}.${s.slice(5,7)}.${s.slice(0,4)}` : "";
+const NOW = new Date(D.generated || Date.now());
+const SEVCOL = {kritisch:"#e7515a",hoch:"#f59e0b",mittel:"#eab308",niedrig:"#38bdf8"};
+
+function normInc(r){
+  if (Array.isArray(r)) return {id:r[0],date:r[1]||"",name:r[2]||"",type:r[3]||"",text:r[4]||"",tags:(r[5]||"").split(",").map(s=>s.trim()).filter(Boolean),href:r[6]||""};
+  return {id:r.incidentID,date:r.orgPublishDate||"",name:r.affectedObj||"",type:r.affectedType||"",text:(r.incidentText||"").trim(),tags:(r.tags||"").split(",").map(s=>s.trim()).filter(Boolean),href:r.href||""};
+}
+function normAdv(a){
+  if (Array.isArray(a)) return {name:a[0],pub:a[1]||"",cls:a[2]||"",score:a[3],title:a[4]||"",cves:(a[5]||"").split(" ").filter(Boolean),status:a[6]||""};
+  return {name:a.name,pub:(a.published||"").slice(0,16),cls:a.classification||"",score:a.basescore,title:a.title||"",cves:(a.cves||[]).slice(0,3),status:a.status||""};
+}
+function loadData(){
+  INC = (D.incidents||[]).map(normInc).filter(x=>!/^Person(en)?$/.test(x.type)).sort((a,b)=>b.date.localeCompare(a.date));
+  ADV = (D.advisories||[]).map(normAdv);
+}
+
+/* -------------------------------------------------------------- Helfer UI */
+const $ = id => document.getElementById(id);
+const tip = $("tip");
+function bindTip(root){
+  root.querySelectorAll("[data-tip]").forEach(el=>{
+    el.addEventListener("mousemove",e=>{tip.innerHTML=el.dataset.tip;tip.style.opacity=1;tip.style.left=(e.clientX+14)+"px";tip.style.top=(e.clientY-10)+"px"});
+    el.addEventListener("mouseleave",()=>tip.style.opacity=0);
+  });
+}
+function countUp(el, to, dur=1200, dec=0, suffix=""){
+  const t0 = performance.now();
+  const step = t => { const p = Math.min(1,(t-t0)/dur), v = to*(1-Math.pow(1-p,3));
+    el.textContent = v.toLocaleString("de-DE",{minimumFractionDigits:dec,maximumFractionDigits:dec}) + suffix;
+    if (p<1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+const ICON = {
+  alert:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>',
+  cal:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+  pulse:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+  lock:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+  bug:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2l1.9 1.9M16 2l-1.9 1.9M9 7.1V6a3 3 0 0 1 6 0v1.1M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6Zm0 0v-9M6.5 13H3m18 0h-3.5M6 9 3.5 7.5M18 9l2.5-1.5M6 17l-2.5 1.5M18 17l2.5 1.5"/></svg>'
+};
+
+/* --------------------------------------------------------------- Charts */
+function sparkline(vals, w=150, h=46, col="#2aebcb"){
+  if (!vals.length) return "";
+  const mx = Math.max(...vals,1), st = w/(vals.length-1||1);
+  const pts = vals.map((v,i)=>`${(i*st).toFixed(1)},${(h-4-(v/mx)*(h-10)).toFixed(1)}`).join(" ");
+  const id = "sg"+Math.random().toString(36).slice(2,7);
+  return `<svg class="spark" width="${w}" height="${h}"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop stop-color="${col}" stop-opacity=".35"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs><polygon points="0,${h} ${pts} ${w},${h}" fill="url(#${id})"/><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.6"/></svg>`;
+}
+function barChart(el, labels, vals, opt={}){
+  const W = el.clientWidth || 600, H = opt.h || 240, pl = 34, pb = 26, pt = 10;
+  const mx = Math.max(...vals,1), mag = Math.pow(10,Math.floor(Math.log10(mx/4))), stp = [1,2,2.5,5,10].map(f=>f*mag).find(s=>s*4>=mx) || mag*10, nice = stp*4;
+  const cw = (W-pl)/vals.length, bw = Math.max(2, Math.min(opt.maxBar||26, cw*.62));
+  let g = "";
+  for (let i=0;i<=4;i++){ const y = pt+(H-pt-pb)*(1-i/4); g += `<line x1="${pl}" x2="${W}" y1="${y}" y2="${y}" stroke="#1b2e4b" stroke-dasharray="${i?'3 4':''}"/><text x="${pl-8}" y="${y+4}" text-anchor="end">${Math.round(nice*i/4)}</text>`; }
+  const every = Math.ceil(vals.length/(W/58));
+  vals.forEach((v,i)=>{
+    const h = (H-pt-pb)*(v/nice), x = pl+i*cw+(cw-bw)/2, y = H-pb-h;
+    const hl = opt.highlight && opt.highlight(labels[i]);
+    g += `<rect class="bar" x="${x}" y="${H-pb}" width="${bw}" height="0" rx="${Math.min(4,bw/2)}" fill="${hl?'url(#bgH)':'url(#bgA)'}" data-tip="<b>${esc(opt.tipLabel?opt.tipLabel(labels[i]):labels[i])}</b><br>${fmtN(v)} ${opt.unit||'Vorfälle'}"><animate attributeName="y" from="${H-pb}" to="${y}" dur=".8s" begin="${(i*0.012).toFixed(2)}s" fill="freeze" calcMode="spline" keySplines=".2 .8 .2 1"/><animate attributeName="height" from="0" to="${h}" dur=".8s" begin="${(i*0.012).toFixed(2)}s" fill="freeze" calcMode="spline" keySplines=".2 .8 .2 1"/></rect>`;
+    if (i%every===0) g += `<text x="${pl+i*cw+cw/2}" y="${H-8}" text-anchor="middle">${esc(opt.fmtX?opt.fmtX(labels[i]):labels[i])}</text>`;
+  });
+  el.innerHTML = `<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}"><defs>
+    <linearGradient id="bgA" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#2aebcb"/><stop offset="1" stop-color="#26ae7f" stop-opacity=".55"/></linearGradient>
+    <linearGradient id="bgH" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ff7a82"/><stop offset="1" stop-color="#e7515a" stop-opacity=".6"/></linearGradient></defs>${g}</svg>`;
+  bindTip(el);
+}
+function donut(el, items, center){
+  const tot = items.reduce((s,x)=>s+x.v,0)||1, R=58, r=40, C=2*Math.PI*((R+r)/2), sw=R-r;
+  let off=0, arcs="";
+  items.forEach(x=>{ const len = C*x.v/tot;
+    arcs += `<circle r="${(R+r)/2}" cx="70" cy="70" fill="none" stroke="${x.c}" stroke-width="${sw}" stroke-dasharray="0 ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 70 70)" data-tip="<b>${esc(x.l)}</b><br>${fmtN(x.v)} (${(x.v/tot*100).toFixed(1).replace('.',',')}&nbsp;%)"><animate attributeName="stroke-dasharray" from="0 ${C}" to="${Math.max(0,len-1.5)} ${C}" dur="1s" fill="freeze" calcMode="spline" keySplines=".2 .8 .2 1"/></circle>`;
+    off += len; });
+  el.innerHTML = `<div class="donut-wrap"><svg width="140" height="140" viewBox="0 0 140 140">${arcs}
+    <text x="70" y="68" text-anchor="middle" style="fill:#e0e6ed;font-size:22px;font-weight:800">${center[0]}</text><text x="70" y="86" text-anchor="middle">${center[1]}</text></svg>
+    <div class="legend">${items.map(x=>`<span><i style="background:${x.c}"></i>${esc(x.l)}<b class="num">${fmtN(x.v)}</b></span>`).join("")}</div></div>`;
+  bindTip(el);
+}
+
+/* ------------------------------------------------------------ Übersicht */
+const H = D.history || {};
+const monthKeys = () => {
+  // Lückenlose Monatsliste von 2019-01 bis Monat des Datenstands
+  const out=[], end = NOW.getFullYear()*12+NOW.getMonth();
+  for (let m = 2019*12; m <= end; m++) out.push(`${Math.floor(m/12)}-${String(m%12+1).padStart(2,"0")}`);
+  return out;
+};
+let monthRange = 24;
+function renderMonths(){
+  const keys = monthKeys().slice(-monthRange), vals = keys.map(k=>H.monthDE?.[k]||0);
+  const MN = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+  const curM = `${NOW.getFullYear()}-${String(NOW.getMonth()+1).padStart(2,"0")}`;
+  barChart($("monthChart"), keys, vals, {
+    h:250, maxBar:28,
+    fmtX:k=>monthRange>30 ? (k.endsWith("-01")?k.slice(0,4):"") : MN[+k.slice(5)-1]+" "+k.slice(2,4),
+    tipLabel:k=>MN[+k.slice(5)-1]+" "+k.slice(0,4)+(k===curM?" (laufend)":""),
+    highlight:k=>vals[keys.indexOf(k)]===Math.max(...vals)
+  });
+  const sum = vals.reduce((a,b)=>a+b,0);
+  $("monthHint").textContent = `${fmtN(sum)} Vorfälle im gewählten Zeitraum · rot = Spitzenmonat`;
+}
+
+function renderOverview(){
+  const yr = NOW.getFullYear(), mo = NOW.getMonth()+1;
+  const m = H.monthDE||{};
+  const sumY = (y, upto) => Object.entries(m).filter(([k])=>k.startsWith(y+"-") && +k.slice(5)<=upto).reduce((s,[,v])=>s+v,0);
+  const ytd = sumY(yr, mo), prev = sumY(yr-1, mo);
+  const days = (NOW - new Date(yr,0,1))/864e5, perWeek = ytd/(days/7);
+  const ransom = (H.tagsDE?.Ransomware||0)/(H.totalDE||1)*100;
+  const st = D.advisoryStats||{cls:{}}; const kh = (st.cls.kritisch||0)+(st.cls.hoch||0);
+  const last30 = INC.filter(x=> (NOW-new Date(x.date))/864e5 <= 30).length;
+  const last12 = monthKeys().slice(-12).map(k=>m[k]||0);
+  const yoy = prev ? (ytd-prev)/prev*100 : 0;
+  const perDay = Object.values(st.perDay||{}); const workdays = Object.keys(st.perDay||{}).filter(d=>{const w=new Date(d).getDay();return w>0&&w<6}).length||1;
+
+  const k = [
+    {cls:"",ico:"alert",lbl:"Erfasste Vorfälle in DE",val:H.totalDE,foot:`von ${fmtN(H.totalWorld)} weltweit in der Datenbank`,spark:last12},
+    {cls:"red",ico:"cal",lbl:`Vorfälle ${yr} bisher`,val:ytd,foot:prev?`<span class="${yoy>=0?'up':'down'}">${yoy>=0?'▲':'▼'} ${Math.abs(yoy).toFixed(0)} %</span> ggü. Vorjahreszeitraum (${fmtN(prev)})`:"",spark:last12,col:"#e7515a"},
+    {cls:"amber",ico:"pulse",lbl:"Ø Vorfälle pro Woche",val:perWeek,dec:1,foot:`${fmtN(last30)} neue Fälle in den letzten 30 Tagen`},
+    {cls:"violet",ico:"lock",lbl:"Anteil Ransomware",val:ransom,dec:0,suf:" %",foot:`${fmtN(H.tagsDE?.Ransomware)} Fälle mit Erpressungssoftware`},
+    {cls:"",ico:"bug",lbl:"BSI-Schwachstellenmeldungen",val:st.count||ADV.length,foot:`davon <b style="color:#fbbf24">${fmtN(kh)}</b> hoch/kritisch · ${esc(st.window||"")}`,spark:perDay,col:"#f59e0b"}
+  ];
+  $("kpis").innerHTML = k.map((x,i)=>`<div class="card kpi ${x.cls}"><div class="lbl"><span class="ico">${ICON[x.ico]}</span>${x.lbl}</div><div class="val num" id="kv${i}">0</div><div class="foot">${x.foot}</div>${x.spark?sparkline(x.spark,150,46,x.col):""}</div>`).join("");
+  k.forEach((x,i)=>countUp($("kv"+i), x.val||0, 1300, x.dec||0, x.suf||""));
+
+  // „Alle X Stunden …“
+  const hours = perWeek ? 168/perWeek : 0;
+  $("everyX").innerHTML = hours>=24 ? `alle ${(hours/24).toFixed(1).replace(".",",")} <small>Tage</small>` : `alle ${Math.round(hours)} <small>Stunden</small>`;
+  $("everyTxt").textContent = `wird ${yr} in Deutschland ein neuer Cyber-Vorfall öffentlich bekannt.`;
+  const fullYears = Object.entries(m).filter(([k])=>k.startsWith(String(yr-1))).reduce((s,[,v])=>s+v,0);
+  $("yearsBox").textContent = fmtN(fullYears) + " ("+(yr-1)+")";
+  $("cveDay").textContent = fmtN(Math.round(perDay.reduce((a,b)=>a+b,0)/workdays));
+
+  // Ticker
+  const tk = INC.slice(0,25).map(x=>`<span><small>${dDE(x.date).slice(0,6)}</small><b class="nm">${esc(x.name)}</b> – ${esc(x.text)}</span>`).join("");
+  $("ticker").innerHTML = tk + tk;
+
+  // Angriffsarten
+  const tags = Object.entries(H.tagsDE||{}).filter(([t])=>!/^Einbruch$/.test(t)).slice(0,9), tmx = tags[0]?.[1]||1;
+  $("tagBars").innerHTML = tags.map(([t,v])=>`<div class="hbar" data-tip="<b>${esc(t)}</b><br>${fmtN(v)} Vorfälle (${(v/(H.totalDE||1)*100).toFixed(0)} %)"><span class="hl">${esc(t)}</span><span class="tr"><span class="fl" data-w="${v/tmx*100}"></span></span><span class="n num">${fmtN(v)}</span></div>`).join("");
+  requestAnimationFrame(()=>setTimeout(()=>$("tagBars").querySelectorAll(".fl").forEach(f=>f.style.width=f.dataset.w+"%"),60));
+  bindTip($("tagBars"));
+
+  const ty = H.typesDE||{};
+  donut($("typeDonut"), [{l:"Unternehmen",v:ty.Unternehmen||0,c:"#2aebcb"},{l:"Organisationen / Behörden",v:ty.Organisation||0,c:"#4361ee"},{l:"Sonstige",v:ty.Sonstige||0,c:"#475569"}], [fmtN(H.totalDE),"Vorfälle"]);
+
+  const years = {}; Object.entries(m).forEach(([k,v])=>{const y=k.slice(0,4); years[y]=(years[y]||0)+v});
+  const yk = Object.keys(years).sort();
+  barChart($("yearChart"), yk, yk.map(y=>years[y]), {h:150, maxBar:30, fmtX:y=>"’"+y.slice(2), tipLabel:y=>y+(y==yr?" (bis heute)":""), highlight:y=>y==yr});
+
+  const c = st.cls||{};
+  donut($("sevDonut"), ["kritisch","hoch","mittel","niedrig"].map(s=>({l:s[0].toUpperCase()+s.slice(1),v:c[s]||0,c:SEVCOL[s]})), [fmtN(st.count||0),"Meldungen"]);
+  $("advHint").textContent = `Zeitraum ${st.window||""} · ${fmtN(st.total)} Meldungen im WID gesamt`;
+  const dk = Object.keys(st.perDay||{}).sort();
+  barChart($("dayChart"), dk, dk.map(d=>st.perDay[d]), {h:150, maxBar:30, unit:"Meldungen", fmtX:d=>d.slice(8,10)+"."+d.slice(5,7), tipLabel:d=>dDE(d)});
+
+  $("navInc").textContent = fmtN(INC.length); $("navAdv").textContent = fmtN(ADV.length);
+  const gen = new Date(D.generated||Date.now());
+  const stand = gen.toLocaleString("de-DE",{dateStyle:"medium",timeStyle:"short"});
+  $("status").classList.toggle("snap", !!D.snapshot);
+  $("stLbl").textContent = D.snapshot ? "Daten-Schnappschuss" : "Daten aktualisiert";
+  $("stTime").textContent = "Stand: " + stand;
+  $("subline").textContent = `Gemeldete Sicherheitsvorfälle & aktuelle Schwachstellen · Stand ${stand}`;
+  $("dataStand").textContent = `Datenstand: ${stand} · ${fmtN(INC.length)} Einzelvorfälle in der Tabelle, Statistiken über ${fmtN(H.totalDE)} DE-Vorfälle seit 2019.` + (D.snapshot ? " (Schnappschuss – für die vollständige Historie bitte aktualisieren.)" : "");
+}
+
+/* ------------------------------------------------------------ Tabellen */
+const PAGE = 15;
+const incState = {q:"",tag:"",type:"",range:90,page:0};
+const TAGCHIPS = ["","Ransomware","Datendiebstahl","Datenleck","Ausfall","DDoS","Phishing","Supply Chain","Sicherheitslücke"];
+$("incTags").innerHTML = TAGCHIPS.map(t=>`<button class="chip ${t?'':'on'}" data-t="${t}">${t||"Alle"}</button>`).join("");
+
+function incFiltered(){
+  const q = incState.q.toLowerCase();
+  return INC.filter(x=>
+    (!incState.range || (NOW-new Date(x.date))/864e5 <= incState.range) &&
+    (!incState.tag || x.tags.includes(incState.tag)) &&
+    (!incState.type || x.type===incState.type) &&
+    (!q || (x.name+" "+x.text+" "+x.tags.join(" ")).toLowerCase().includes(q)));
+}
+function renderInc(){
+  const rows = incFiltered(), pages = Math.max(1,Math.ceil(rows.length/PAGE));
+  incState.page = Math.min(incState.page, pages-1);
+  const sl = rows.slice(incState.page*PAGE, incState.page*PAGE+PAGE);
+  $("incBody").innerHTML = sl.length ? sl.map(x=>`<tr data-id="${x.id}">
+    <td class="date">${dDE(x.date)}</td>
+    <td class="name"><span class="nm">${esc(x.name)}</span><small>${esc(x.type)}</small></td>
+    <td style="color:var(--fg-muted)">${esc(x.text)}</td>
+    <td>${x.tags.filter(t=>t!=="Einbruch").slice(0,3).map(t=>`<span class="t ${esc(t)}">${esc(t)}</span>`).join("")}</td>
+    <td style="color:var(--fg-dim)">›</td></tr>`).join("") : `<tr><td colspan="5" class="empty">Keine Vorfälle für diese Auswahl.</td></tr>`;
+  $("incInfo").textContent = `${fmtN(rows.length)} Vorfälle · Seite ${incState.page+1} von ${pages}`;
+  $("incPrev").disabled = incState.page===0; $("incNext").disabled = incState.page>=pages-1;
+}
+$("incSearch").oninput = e=>{incState.q=e.target.value;incState.page=0;renderInc()};
+$("incType").onchange = e=>{incState.type=e.target.value;incState.page=0;renderInc()};
+$("incRange").onchange = e=>{incState.range=+e.target.value;incState.page=0;renderInc()};
+$("incTags").onclick = e=>{const b=e.target.closest(".chip");if(!b)return;$("incTags").querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c===b));incState.tag=b.dataset.t;incState.page=0;renderInc()};
+$("incPrev").onclick = ()=>{incState.page--;renderInc()}; $("incNext").onclick = ()=>{incState.page++;renderInc()};
+$("incBody").onclick = e=>{const tr=e.target.closest("tr[data-id]");if(!tr)return;const x=INC.find(i=>String(i.id)===tr.dataset.id);if(x)openInc(x)};
+
+function openInc(x){
+  const url = x.href ? "https://www.security-incidents.de/sicherheitsvorfall-datenbank/"+encodeURI(x.href) : "https://www.security-incidents.de/sicherheitsvorfall-datenbank/";
+  $("mbox").className="box";
+  $("mbox").innerHTML = `<button class="x" onclick="closeModal()">×</button>
+    <div class="hint" style="text-transform:uppercase;letter-spacing:.08em;font-weight:600;color:#f87171">Sicherheitsvorfall</div>
+    <h3 class="${document.body.classList.contains('blurnames')?'nmb':''}">${esc(x.name)}</h3>
+    <div class="hint">${esc(x.type)} · Deutschland</div>
+    <dl><dt>Datum</dt><dd class="num">${dDE(x.date)}</dd>
+    <dt>Vorfall</dt><dd>${esc(x.text)}</dd>
+    <dt>Kategorien</dt><dd>${x.tags.map(t=>`<span class="t ${esc(t)}">${esc(t)}</span>`).join("")}</dd></dl>
+    <a class="btn primary" href="${url}" target="_blank" rel="noopener">Details &amp; Quellen öffnen ↗</a>`;
+  $("modal").classList.add("open");
+}
+function closeModal(){$("modal").classList.remove("open")}
+$("modal").onclick = e=>{if(e.target.id==="modal")closeModal()};
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
+
+const advState = {q:"",sev:"",status:"",page:0};
+function renderAdv(){
+  const q = advState.q.toLowerCase();
+  const rows = ADV.filter(a=>(!advState.sev||a.cls===advState.sev)&&(!advState.status||a.status===advState.status)&&(!q||(a.title+" "+a.name+" "+a.cves.join(" ")).toLowerCase().includes(q)));
+  const pages = Math.max(1,Math.ceil(rows.length/PAGE)); advState.page=Math.min(advState.page,pages-1);
+  const sl = rows.slice(advState.page*PAGE, advState.page*PAGE+PAGE);
+  $("advBody").innerHTML = sl.length ? sl.map(a=>{const sc=(a.score||0)/10; return `<tr data-n="${esc(a.name)}">
+    <td><span class="sev ${esc(a.cls)}">${esc(a.cls)}</span></td>
+    <td><div class="score"><span class="tr"><span class="fl" style="width:${a.score||0}%;background:${SEVCOL[a.cls]||'#64748b'}"></span></span>${sc.toFixed(1).replace(".",",")}</div></td>
+    <td><b style="font-weight:600">${esc(a.title)}</b><span class="cve">${esc(a.name)}</span></td>
+    <td>${a.cves.map(c=>`<a class="cve" href="https://nvd.nist.gov/vuln/detail/${esc(c)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(c)}</a>`).join("")||'<span class="cve">–</span>'}</td>
+    <td><span class="st ${esc(a.status)}">${esc(a.status)}</span></td>
+    <td class="date">${dDE(a.pub)} ${a.pub.slice(11,16)}</td></tr>`}).join("") : `<tr><td colspan="6" class="empty">Keine Meldungen für diese Auswahl.</td></tr>`;
+  $("advInfo").textContent = `${fmtN(rows.length)} Meldungen · Seite ${advState.page+1} von ${pages}`;
+  $("advPrev").disabled = advState.page===0; $("advNext").disabled = advState.page>=pages-1;
+}
+$("advSearch").oninput = e=>{advState.q=e.target.value;advState.page=0;renderAdv()};
+$("advStatus").onchange = e=>{advState.status=e.target.value;advState.page=0;renderAdv()};
+$("advSev").onclick = e=>{const b=e.target.closest(".chip");if(!b)return;$("advSev").querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c===b));advState.sev=b.dataset.s;advState.page=0;renderAdv()};
+$("advPrev").onclick = ()=>{advState.page--;renderAdv()}; $("advNext").onclick = ()=>{advState.page++;renderAdv()};
+$("advBody").onclick = e=>{const tr=e.target.closest("tr[data-n]");if(tr)window.open("https://wid.cert-bund.de/portal/wid/securityadvisory?name="+encodeURIComponent(tr.dataset.n),"_blank","noopener")};
+
+/* Globale Suche: füllt beide Tabellen */
+$("gsearch").oninput = e=>{const v=e.target.value; $("incSearch").value=v; $("advSearch").value=v; incState.q=advState.q=v; incState.range=0; $("incRange").value="0"; incState.page=advState.page=0; renderInc(); renderAdv();};
+$("gsearch").onkeydown = e=>{if(e.key==="Enter") document.getElementById("incidents").scrollIntoView({behavior:"smooth"})};
+document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();$("gsearch").focus()}});
+
+/* ------------------------------------------------------ Demo-Funktionen */
+function togglePresent(){
+  const on = !document.body.classList.contains("present");
+  document.body.classList.toggle("present", on);
+  $("btnPresent").classList.toggle("on", on);
+  if (on && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
+  if (!on && document.fullscreenElement) document.exitFullscreen();
+  setTimeout(()=>{renderMonths(); renderOverview(); renderActors(); renderRansomMonths(); renderKev();}, 250);
+}
+$("btnPresent").onclick = togglePresent;
+$("navPresent").onclick = e=>{e.preventDefault();togglePresent()};
+document.addEventListener("fullscreenchange",()=>{ if(!document.fullscreenElement && document.body.classList.contains("present")){document.body.classList.remove("present");$("btnPresent").classList.remove("on");setTimeout(()=>{renderMonths();renderOverview();renderActors();renderRansomMonths();renderKev()},250)} });
+
+$("navBlur").onclick = e=>{e.preventDefault(); const on=document.body.classList.toggle("blurnames"); $("incWrap").classList.toggle("blur",on); $("blurLbl").textContent = on?"Namen einblenden":"Namen ausblenden"; document.querySelectorAll(".ticker .nm").forEach(n=>n.style.filter=on?"blur(6px)":"");};
+
+$("rangeChips").onclick = e=>{const b=e.target.closest(".chip");if(!b)return;$("rangeChips").querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c===b));monthRange=+b.dataset.r;renderMonths()};
+
+// Navigation markieren
+const navLinks=[...document.querySelectorAll('.nav a[href^="#"]:not([href="#"])')];
+const io=new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting)navLinks.forEach(a=>a.classList.toggle("on",a.getAttribute("href")==="#"+en.target.id))}),{rootMargin:"-40% 0px -55% 0px"});
+document.querySelectorAll("main section").forEach(s=>io.observe(s));
+
+setInterval(()=>{$("clock").textContent=new Date().toLocaleTimeString("de-DE")},1000);
+$("clock").textContent=new Date().toLocaleTimeString("de-DE");
+let rz; window.addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{renderMonths();renderOverview();renderActors();renderRansomMonths();renderKev()},200)});
+
+/* ----------------------------------------------- JSON-Import (Drag&Drop) */
+function buildHistory(all){
+  const de = all.filter(x=>x.country==="DE"), h={totalWorld:all.length,totalDE:de.length,monthDE:{},tagsDE:{},typesDE:{},countries:{}};
+  all.forEach(x=>h.countries[x.country]=(h.countries[x.country]||0)+1);
+  de.forEach(x=>{const m=(x.orgPublishDate||"").slice(0,7); if(m>="2019") h.monthDE[m]=(h.monthDE[m]||0)+1;
+    (x.tags||"").split(",").map(s=>s.trim()).filter(Boolean).forEach(t=>h.tagsDE[t]=(h.tagsDE[t]||0)+1);
+    const t=["Unternehmen","Organisation"].includes(x.affectedType)?x.affectedType:"Sonstige"; h.typesDE[t]=(h.typesDE[t]||0)+1;});
+  h.tagsDE=Object.fromEntries(Object.entries(h.tagsDE).sort((a,b)=>b[1]-a[1]).slice(0,18));
+  return h;
+}
+function importRansomware(arr){
+  const de=arr; const byMonth={},groups={}; const rows=[];
+  const cut=new Date(Date.now()-365*864e5).toISOString().slice(0,10);
+  const gkey=v=>(v.attackdate||v.discovered||v.published||"").slice(0,10);
+  de.forEach(v=>{const g=(v.group||v.group_name||"").toLowerCase();const d=gkey(v);const nm=v.victim||v.post_title||"?";
+    if(d)byMonth[d.slice(0,7)]=(byMonth[d.slice(0,7)]||0)+1;
+    const gr=groups[g]=groups[g]||{de:0,de12:0,months:{},latest:[]};
+    gr.de++; if(d>=cut)gr.de12++; if(d)gr.months[d.slice(0,7)]=(gr.months[d.slice(0,7)]||0)+1;
+    gr.latest.push([nm,d]); rows.push([nm.slice(0,60),g,d]);});
+  rows.sort((a,b)=>b[2].localeCompare(a[2]));
+  Object.values(groups).forEach(gr=>{gr.latest.sort((a,b)=>b[1].localeCompare(a[1]));gr.latest=gr.latest.slice(0,6)});
+  window.RANSOM={generated:new Date().toISOString(),snapshot:false,totalDE:de.length,byMonth,groups,victims:rows.slice(0,120)};
+  // RL/ACTORS-Referenzen in diesem Scope sind const – daher Felder kopieren statt neu zuweisen
+  Object.keys(RL.groups).forEach(k=>delete RL.groups[k]); Object.assign(RL.groups,groups);
+  Object.keys(RL.byMonth).forEach(k=>delete RL.byMonth[k]); Object.assign(RL.byMonth,byMonth);
+  RL.victims=window.RANSOM.victims; RL.totalDE=de.length;
+  renderActors(); renderRansomMonths();
+}
+function importJSON(j){
+  const arr = Array.isArray(j)?j:(j.rows||null);
+  if (arr && arr[0] && (arr[0].victim!==undefined || arr[0].group!==undefined || arr[0].group_name!==undefined)) {
+    importRansomware(arr);                          // ransomware.live Opferliste
+  } else if (arr) {                                 // security-incidents.de
+    const all = arr;
+    Object.assign(D.history, buildHistory(all));
+    D.incidents = all.filter(x=>x.country==="DE");
+  } else if (j.vulnerabilities && Array.isArray(j.vulnerabilities)) {  // CISA KEV
+    const v=j.vulnerabilities;
+    const clean=s=>(s||"").replace(/\s+/g," ").trim();
+    const ransom=v.filter(x=>x.knownRansomwareCampaignUse==="Known").sort((a,b)=>b.dateAdded.localeCompare(a.dateAdded));
+    const recent=v.slice().sort((a,b)=>b.dateAdded.localeCompare(a.dateAdded)).slice(0,50);
+    const seen=new Set(),out=[];[...ransom,...recent].forEach(x=>{if(!seen.has(x.cveID)){seen.add(x.cveID);
+      out.push([x.cveID,x.dateAdded,x.vendorProject,x.product,clean(x.vulnerabilityName).slice(0,90),clean(x.shortDescription).slice(0,150),x.knownRansomwareCampaignUse==="Known"?1:0,x.dueDate||""])}});
+    const bv={},by={},ry={};ransom.forEach(x=>bv[x.vendorProject]=(bv[x.vendorProject]||0)+1);
+    v.forEach(x=>{const y=x.dateAdded.slice(0,4);by[y]=(by[y]||0)+1});ransom.forEach(x=>{const y=x.dateAdded.slice(0,4);ry[y]=(ry[y]||0)+1});
+    KEV.rows=out; KEV.total=v.length; KEV.ransomTotal=ransom.length; KEV.version=j.catalogVersion||"";
+    KEV.topVendorsR=Object.entries(bv).sort((a,b)=>b[1]-a[1]).slice(0,10); KEV.byYear=by; KEV.ransomByYear=ry;
+    kevState.page=0; renderKev(); return;
+  } else if (j.content) {                          // CERT-Bund WID
+    const c=j.content, cls={}, pd={};
+    c.forEach(a=>{cls[a.classification]=(cls[a.classification]||0)+1; const d=(a.published||"").slice(0,10); pd[d]=(pd[d]||0)+1});
+    const f=(c[c.length-1]?.published||"").slice(0,10), l=(c[0]?.published||"").slice(0,10);
+    D.advisoryStats={total:j.totalElements,count:c.length,cls,perDay:pd,window:`${f.slice(8,10)}.${f.slice(5,7)}.–${l.slice(8,10)}.${l.slice(5,7)}.${l.slice(0,4)}`};
+    D.advisories=c;
+  } else if (j.incidents) { Object.assign(D, j); }
+  else throw new Error("Unbekanntes Format");
+  D.generated = new Date().toISOString(); D.snapshot = false;
+  loadData(); renderAll();
+}
+function readFiles(files){[...files].forEach(f=>{const r=new FileReader();r.onload=()=>{try{importJSON(JSON.parse(r.result));}catch(err){alert("Datei konnte nicht gelesen werden: "+err.message)}};r.readAsText(f)})}
+$("pick").onclick = e=>{e.preventDefault();$("file").click()};
+$("file").onchange = e=>readFiles(e.target.files);
+["dragover","drop"].forEach(ev=>document.addEventListener(ev,e=>{e.preventDefault(); if(ev==="drop"&&e.dataTransfer.files.length) readFiles(e.dataTransfer.files)}));
+
+/* ============================================ BEDROHUNGSAKTEURE */
+const RL = window.RANSOM || {groups:{},byMonth:{},victims:[],totalDE:0};
+const ACTORS = (window.ACTORS||[]).reduce((m,a)=>(m[a.g.toLowerCase()]=a,m),{});
+const GMETA = window.GROUP_META||{};
+const TACTICS = window.TACTICS||[];
+const TECHNOTES = window.TECH_NOTES||{};
+const SECTOR_DE = {"Manufacturing":"Fertigung/Industrie","Professional Services":"Dienstleister","Technology":"Technologie/IT","Healthcare":"Gesundheit","Retail & E-Commerce":"Handel/E-Commerce","Financial Services":"Finanzen","Education":"Bildung","Government & Defense":"Behörden/Verteidigung","Transportation":"Transport/Logistik","Agriculture and Food Production":"Landwirtschaft/Lebensmittel","Hospitality":"Gastgewerbe","Energy & Utilities":"Energie/Versorger","Other":"Sonstige"};
+const CTRY_DE = {"United States":"USA","Germany":"Deutschland","United Kingdom":"Großbritannien","Canada":"Kanada","France":"Frankreich","Italy":"Italien","Spain":"Spanien","Brazil":"Brasilien","Mexico":"Mexiko","Netherlands":"Niederlande","Australia":"Australien","India":"Indien","Thailand":"Thailand","Malaysia":"Malaysia","New Zealand":"Neuseeland","China":"China","United Arab Emirates":"VAE"};
+const deS = s => SECTOR_DE[s]||s;
+const deC = c => CTRY_DE[c]||c;
+const techNote = t => { for(const k in TECHNOTES){ if(t.indexOf(k)===0) return TECHNOTES[k]; } return "Technik nach MITRE ATT&CK."; };
+
+let actorSort = "de12";
+function renderActors(){
+  const groups = Object.entries(RL.groups||{}).map(([g,d])=>({g,...d}))
+    .sort((a,b)=>(b[actorSort]||0)-(a[actorSort]||0));
+  const top = groups.filter(x=>x[actorSort]>0).length ? groups.filter(x=>x[actorSort]>0) : groups;
+  const max = Math.max(...top.map(x=>x[actorSort]||0),1);
+  $("actorCards").innerHTML = top.slice(0,16).map((x,i)=>{
+    const a=ACTORS[x.g]||{}; const meta=GMETA[x.g]||{}; const active=(x.de12||0)>0;
+    const mv=Object.keys(x.months||{}).sort(); const vals=mv.slice(-12).map(k=>x.months[k]);
+    return `<div class="actor ${active?'':'inactive'}" data-g="${x.g}">
+      <span class="rank">#${i+1}</span>
+      <h4>${esc(a.name||x.g)}<span class="lbl-act ${active?'':'off'}">${active?'aktiv':'ruhig'}</span></h4>
+      <div class="mdl">${esc(meta.model||'Ransomware-Gruppe')}</div>
+      <div class="big num">${fmtN(x[actorSort])}<small> DE-Opfer ${actorSort==='de12'?'(12 Mon.)':'gesamt'}</small></div>
+      <div class="meta"><span>Weltweit: ${fmtN(a.victims||0)}</span><span>Ø Leak-Verzug: ${esc(a.delay||'?')} Tage</span></div>
+      <div class="trend">${sparkline(vals,230,30,active?'#e7515a':'#64748b')}</div></div>`;
+  }).join("");
+  bindTip($("actorCards"));
+  // Top-Gruppen-Balken
+  $("actorBars").innerHTML = top.slice(0,10).map(function(x){
+    var a=ACTORS[x.g]||{}, nm=esc(a.name||x.g), w=(x[actorSort]/max*100), n=fmtN(x[actorSort]);
+    return '<div class="hbar" data-tip="<b>'+nm+'</b><br>'+n+' DE-Opfer"><span class="hl">'+nm+'</span><span class="tr"><span class="fl" data-w="'+w+'"></span></span><span class="n num">'+n+'</span></div>';
+  }).join("");
+  requestAnimationFrame(()=>setTimeout(()=>$("actorBars").querySelectorAll(".fl").forEach(f=>f.style.width=f.dataset.w+"%"),60));
+  bindTip($("actorBars"));
+  $("navAct").textContent = fmtN(Object.keys(RL.groups||{}).length);
+}
+$("actorSort").onclick = e=>{const b=e.target.closest(".chip");if(!b)return;$("actorSort").querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c===b));actorSort=b.dataset.s;renderActors()};
+$("actorCards").onclick = e=>{const c=e.target.closest(".actor[data-g]");if(c)openActor(c.dataset.g)};
+
+let rmRange=24;
+function renderRansomMonths(){
+  const m=RL.byMonth||{}; const keys=monthKeys().slice(-rmRange); const vals=keys.map(k=>m[k]||0);
+  const MN=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+  barChart($("ransomChart"),keys,vals,{h:250,maxBar:28,unit:"Leaks",
+    fmtX:k=>rmRange>30?(k.endsWith("-01")?k.slice(0,4):""):MN[+k.slice(5)-1]+" "+k.slice(2,4),
+    tipLabel:k=>MN[+k.slice(5)-1]+" "+k.slice(0,4),
+    highlight:k=>vals[keys.indexOf(k)]===Math.max(...vals)});
+  $("rmHint").textContent=`${fmtN(vals.reduce((a,b)=>a+b,0))} veröffentlichte Opfer im Zeitraum · Quelle: ransomware.live`;
+}
+$("rmRange").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;$("rmRange").querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c===b));rmRange=+b.dataset.r;renderRansomMonths()};
+
+function openActor(g){
+  const a=ACTORS[g]||{}; const d=RL.groups[g]||{}; const meta=GMETA[g]||{};
+  const smax=Math.max(...(a.sectors||[]).map(s=>s[1]),1);
+  const cmax=Math.max(...(a.ctry||[]).map(s=>s[1]),1);
+  const sectors=(a.sectors||[]).map(s=>`<div class="minibar" data-tip="${fmtN(s[1])} Opfer"><div><div style="margin-bottom:3px">${esc(deS(s[0]))}</div><div class="tr"><span class="fl" style="width:${s[1]/smax*100}%"></span></div></div><b class="num">${fmtN(s[1])}</b></div>`).join("");
+  const ctrys=(a.ctry||[]).map(s=>{const isDE=s[0]==='Germany';return `<div class="minibar c" data-tip="${fmtN(s[1])} Opfer"><div><div style="margin-bottom:3px">${esc(deC(s[0]))}${isDE?' 🇩🇪':''}</div><div class="tr"><span class="fl" style="width:${s[1]/cmax*100}%"></span></div></div><b class="num">${fmtN(s[1])}</b></div>`}).join("");
+  const toolCats=Object.entries(a.tools||{});
+  const tools=toolCats.length?toolCats.map(([k,v])=>`<div class="toolcat"><div class="ct">${esc(k)}</div>${v.map(t=>`<span class="tg">${esc(t)}</span>`).join("")}</div>`).join(""):'<p class="hint">Keine Werkzeugdaten erfasst.</p>';
+  // ATT&CK-Kette nach Taktik-Reihenfolge
+  const ttps=a.ttps||{};
+  const chain=TACTICS.filter(t=>ttps[t[0]]&&ttps[t[0]].length).map((t,i)=>{
+    const techs=ttps[t[0]];
+    return `<details class="ttp-row"${i<3?' open':''}><summary><span class="ph">${i+1}</span><span><span class="de">${esc(t[1])}</span> <span class="en">${esc(t[0])}</span></span><span class="cnt2">${techs.length} Technik(en)</span></summary>
+      <div class="ttp-body"><p class="ex">${esc(t[2])}</p><div class="ttp-tech">${techs.map(tc=>`<span class="tc" data-tip="${esc(techNote(tc))}">${esc(tc)}</span>`).join("")}</div></div></details>`;
+  }).join("");
+  const latest=(d.latest||[]).map(v=>`<div class="v"><div>${esc(v[0])}</div><span>${dDE(v[1])}</span></div>`).join("");
+  const mv=Object.keys(d.months||{}).sort(); const trend=sparkline(mv.slice(-18).map(k=>d.months[k]),300,40,'#e7515a');
+  $("mbox").className="box wide";
+  $("mbox").innerHTML=`<button class="x" onclick="closeModal()">×</button>
+    <div class="prof prof-head">
+      <div class="tt">
+        <div class="hint" style="text-transform:uppercase;letter-spacing:.08em;font-weight:600;color:#f87171">Ransomware-Gruppe</div>
+        <h3>${esc(a.name||g)}</h3>
+        <div class="hint">${esc(meta.model||'')}${a.first?' · erstmals beobachtet '+a.first.slice(0,4):''}${a.last?' · zuletzt aktiv '+dDE(a.last):''}</div>
+      </div>
+      <div style="text-align:right">${trend}<div class="hint">Leaks mit DE-Bezug</div></div>
+    </div>
+    ${meta.note?`<div class="protect" style="background:#e7515a12;border-color:#e7515a33"><b style="color:#f87171">Einordnung:</b> ${esc(meta.note)}</div>`:''}
+    <p class="prof-desc">${esc(a.desc||'Keine Beschreibung verfügbar.')}</p>
+    <div class="prof-stats">
+      <div class="s"><b class="num">${fmtN(d.de||0)}</b><span>Opfer in Deutschland</span></div>
+      <div class="s"><b class="num">${fmtN(d.de12||0)}</b><span>DE – letzte 12 Monate</span></div>
+      <div class="s"><b class="num">${fmtN(a.victims||0)}</b><span>Opfer weltweit</span></div>
+      <div class="s"><b class="num">${esc(a.delay||'?')}</b><span>Ø Tage bis Leak</span></div>
+    </div>
+    <div class="prof-cols">
+      <div><h5>Bevorzugte Branchen (weltweit)</h5>${sectors||'<p class="hint">–</p>'}</div>
+      <div><h5>Top-Zielländer</h5>${ctrys||'<p class="hint">–</p>'}</div>
+    </div>
+    <h5>Angriffsmethoden – so gehen die Täter vor (MITRE ATT&CK)</h5>
+    ${chain?`<div class="ttps">${chain}</div>`:'<p class="hint">Für diese Gruppe liegen keine strukturierten ATT&CK-Daten vor.</p>'}
+    <div class="protect"><b>Schutz-Fazit:</b> Der Einstieg erfolgt bei den meisten dieser Gruppen über gestohlene Zugangsdaten, ungepatchte extern erreichbare Systeme oder Phishing. Die wirksamsten Hebel: <b>MFA</b> für alle Fernzugänge, <b>schnelles Patchen</b> extern erreichbarer Systeme, <b>EDR mit Manipulationsschutz</b>, <b>Netzsegmentierung</b> sowie <b>offline/unveränderbare Backups</b> mit getestetem Wiederanlauf. Einzelheiten je Phase oben beim Aufklappen.</div>
+    <h5>Eingesetzte Werkzeuge</h5>${tools}
+    <h5>Zuletzt veröffentlichte Opfer in Deutschland</h5>
+    <div class="vlist">${latest||'<p class="hint">–</p>'}</div>
+    <p class="hint" style="margin-top:14px">Quelle: ransomware.live · Methoden nach MITRE ATT&CK, Crocodyli &amp; Ransomware-Tool-Matrix. Angaben ohne Gewähr.</p>
+    <a class="btn primary" style="margin-top:14px" href="https://www.ransomware.live/group/${encodeURIComponent(g)}" target="_blank" rel="noopener">Vollständiges Profil auf ransomware.live ↗</a>`;
+  $("modal").classList.add("open");
+  bindTip($("mbox"));
+}
+
+/* ============================================ KEV (aktiv ausgenutzt) */
+const KEV = window.KEV || {rows:[],topVendorsR:[],byYear:{},ransomByYear:{},total:0,ransomTotal:0};
+// rows: [cve, dateAdded, vendor, product, name, desc, ransom(1/0), dueDate]
+const kevState = {q:"", filter:"ransom", page:0};
+function kevRows(){
+  const q=kevState.q.toLowerCase();
+  return KEV.rows.filter(r=>
+    (kevState.filter==="all" || r[6]===1) &&
+    (!q || (r[0]+" "+r[2]+" "+r[3]+" "+r[4]).toLowerCase().includes(q)));
+}
+function renderKev(){
+  // KPIs
+  const ry=KEV.ransomByYear||{}, yNow=new Date(NOW).getFullYear();
+  const ransom26=ry[yNow]||0;
+  $("kevKpis").innerHTML=[
+    {ico:"bug",cls:"red",lbl:"Aktiv ausgenutzte Lücken (KEV)",val:KEV.total,foot:"im CISA-Katalog gelistet"},
+    {ico:"lock",cls:"red",lbl:"davon von Ransomware genutzt",val:KEV.ransomTotal,foot:`${Math.round((KEV.ransomTotal/(KEV.total||1))*100)} % aller KEV-Einträge`},
+    {ico:"alert",cls:"amber",lbl:`neu ${yNow} (Ransomware)`,val:ransom26,foot:"heuer neu als Ransomware-Vektor"},
+    {ico:"pulse",cls:"",lbl:"Top-Hersteller",val:0,foot:(KEV.topVendorsR[0]||["–"])[0]+" führt die Ransomware-Lücken an",txt:(KEV.topVendorsR[0]||["–",0])[0]}
+  ].map((x,i)=>`<div class="card kpi ${x.cls}"><div class="lbl"><span class="ico">${ICON[x.ico]}</span>${x.lbl}</div><div class="val num" id="kevk${i}">${x.txt?esc(x.txt):'0'}</div><div class="foot">${x.foot}</div></div>`).join("");
+  [0,1,2].forEach(i=>countUp($("kevk"+i),[KEV.total,KEV.ransomTotal,ransom26][i],1200));
+  // Hersteller-Balken (Ransomware)
+  const vmax=(KEV.topVendorsR[0]||[0,1])[1]||1;
+  $("kevVendors").innerHTML=(KEV.topVendorsR||[]).map(([v,n])=>`<div class="hbar" data-tip="<b>${esc(v)}</b><br>${fmtN(n)} von Ransomware genutzte Lücken"><span class="hl">${esc(v)}</span><span class="tr"><span class="fl" data-w="${n/vmax*100}"></span></span><span class="n num">${fmtN(n)}</span></div>`).join("");
+  requestAnimationFrame(()=>setTimeout(()=>$("kevVendors").querySelectorAll(".fl").forEach(f=>f.style.width=f.dataset.w+"%"),60));
+  bindTip($("kevVendors"));
+  // Jahres-Chart (gestapelt: alle vs. ransomware) – zwei Balkenreihen als Gruppen
+  renderKevYears();
+  $("navKev").textContent=fmtN(KEV.ransomTotal);
+  $("kevStand").textContent=KEV.version?("Katalog "+KEV.version):"";
+  renderKevTable();
+}
+function renderKevYears(){
+  const el=$("kevYears"); const W=el.clientWidth||500,H=190,pl=34,pb=24,pt=8;
+  const years=Object.keys(KEV.byYear||{}).sort();
+  const allV=years.map(y=>KEV.byYear[y]), rV=years.map(y=>KEV.ransomByYear[y]||0);
+  const mx=Math.max(...allV,1),nice=Math.ceil(mx/100)*100||100;
+  const gw=(W-pl)/years.length, bw=Math.min(26,gw*0.5);
+  let g="";
+  for(let i=0;i<=4;i++){const yy=pt+(H-pt-pb)*(1-i/4);g+=`<line x1="${pl}" x2="${W}" y1="${yy}" y2="${yy}" stroke="#1b2e4b" stroke-dasharray="${i?'3 4':''}"/><text x="${pl-8}" y="${yy+4}" text-anchor="end">${Math.round(nice*i/4)}</text>`}
+  years.forEach((y,i)=>{
+    const x=pl+i*gw+(gw-bw)/2;
+    const ha=(H-pt-pb)*(allV[i]/nice), hr=(H-pt-pb)*(rV[i]/nice);
+    g+=`<rect class="bar" x="${x}" y="${H-pb-ha}" width="${bw}" height="${ha}" rx="3" fill="url(#bgKa)" data-tip="<b>${y}</b><br>${fmtN(allV[i])} KEV gesamt"/>`;
+    g+=`<rect class="bar" x="${x}" y="${H-pb-hr}" width="${bw}" height="${hr}" rx="3" fill="url(#bgKh)" data-tip="<b>${y}</b><br>${fmtN(rV[i])} von Ransomware genutzt"/>`;
+    g+=`<text x="${pl+i*gw+gw/2}" y="${H-8}" text-anchor="middle">’${y.slice(2)}</text>`;
+  });
+  el.innerHTML=`<svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}"><defs>
+    <linearGradient id="bgKa" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#2aebcb" stop-opacity=".5"/><stop offset="1" stop-color="#26ae7f" stop-opacity=".25"/></linearGradient>
+    <linearGradient id="bgH" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ff7a82"/><stop offset="1" stop-color="#e7515a" stop-opacity=".7"/></linearGradient></defs>${g}</svg>`;
+  bindTip(el);
+}
+function renderKevTable(){
+  const rows=kevRows(), pages=Math.max(1,Math.ceil(rows.length/PAGE));
+  kevState.page=Math.min(kevState.page,pages-1);
+  const sl=rows.slice(kevState.page*PAGE,kevState.page*PAGE+PAGE);
+  $("kevBody").innerHTML=sl.length?sl.map(r=>`<tr data-cve="${esc(r[0])}">
+    <td><a class="cve" href="https://nvd.nist.gov/vuln/detail/${esc(r[0])}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(r[0])}</a></td>
+    <td class="name"><span class="nm">${esc(r[2])}</span><small>${esc(r[3])}</small></td>
+    <td style="color:var(--fg-muted)">${esc(r[4])}</td>
+    <td>${r[6]===1?'<span class="sev kritisch" style="gap:5px"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="m13 2-3 7h5l-3 9 8-11h-5l3-5z"/></svg>Ja</span>':'<span class="st UPDATE">–</span>'}</td>
+    <td class="date">${dDE(r[1])}</td></tr>`).join(""):`<tr><td colspan="5" class="empty">Keine Einträge für diese Auswahl.</td></tr>`;
+  $("kevInfo").textContent=`${fmtN(rows.length)} Lücken · Seite ${kevState.page+1} von ${pages}`;
+  $("kevPrev").disabled=kevState.page===0; $("kevNext").disabled=kevState.page>=pages-1;
+}
+$("kevSearch").oninput=e=>{kevState.q=e.target.value;kevState.page=0;renderKevTable()};
+$("kevFilter").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;$("kevFilter").querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c===b));kevState.filter=b.dataset.f;kevState.page=0;renderKevTable()};
+$("kevPrev").onclick=()=>{kevState.page--;renderKevTable()}; $("kevNext").onclick=()=>{kevState.page++;renderKevTable()};
+$("kevBody").onclick=e=>{const tr=e.target.closest("tr[data-cve]");if(tr)window.open("https://www.cisa.gov/known-exploited-vulnerabilities-catalog?search_api_fulltext="+encodeURIComponent(tr.dataset.cve),"_blank","noopener")};
+
+/* --------------------------------------------------------------- Start */
+function renderAll(){ renderMonths(); renderOverview(); renderInc(); renderAdv(); renderActors(); renderRansomMonths(); renderKev(); }
+loadData(); renderAll();
+</script>
+</body>
+</html>
