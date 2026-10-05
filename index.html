@@ -926,7 +926,8 @@ function kevRows(){
   const q=kevState.q.toLowerCase();
   return KEV.rows.filter(r=>
     (kevState.filter==="all" || r[6]===1) &&
-    (!q || (r[0]+" "+r[2]+" "+r[3]+" "+r[4]).toLowerCase().includes(q)));
+    (!q || (r[0]+" "+r[2]+" "+r[3]+" "+r[4]).toLowerCase().includes(q)))
+    .sort((a,b)=>(b[1]||"").localeCompare(a[1]||""));  // neueste zuerst – so zeigt "Alle KEV" oben sofort andere Einträge
 }
 function renderKev(){
   // KPIs
