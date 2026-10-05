@@ -638,9 +638,13 @@ function renderOverview(){
   $("navInc").textContent = fmtN(INC.length); $("navAdv").textContent = fmtN(ADV.length);
   const gen = new Date(D.generated||Date.now());
   const stand = gen.toLocaleString("de-DE",{dateStyle:"medium",timeStyle:"short"});
-  $("status").classList.toggle("snap", !!D.snapshot);
-  $("stLbl").textContent = D.snapshot ? "Daten-Schnappschuss" : "Daten aktualisiert";
-  $("stTime").textContent = "Stand: " + stand;
+  const ageDays = (Date.now() - gen.getTime()) / 864e5;
+  const stale = ageDays > 2;
+  $("status").classList.toggle("snap", !!D.snapshot || stale);
+  $("stLbl").textContent = stale ? "Daten veraltet" : (D.snapshot ? "Daten-Schnappschuss" : "Daten aktuell");
+  $("stTime").innerHTML = "Stand: " + stand + (stale
+    ? `<br><span style="color:var(--high)">vor ${Math.floor(ageDays)} Tagen · „Dashboard starten“ ausführen</span>`
+    : "");
   $("subline").textContent = `Gemeldete Sicherheitsvorfälle & aktuelle Schwachstellen · Stand ${stand}`;
   $("dataStand").textContent = `Datenstand: ${stand} · ${fmtN(INC.length)} Einzelvorfälle in der Tabelle, Statistiken über ${fmtN(H.totalDE)} DE-Vorfälle seit 2019.` + (D.snapshot ? " (Schnappschuss – für die vollständige Historie bitte aktualisieren.)" : "");
 }

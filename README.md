@@ -132,16 +132,37 @@ Quelldatenbanken bereits anonymisiert (z. B. „IT-Dienstleister").
 
 ## Daten aktualisieren
 
-Das Dashboard enthält einen **Daten-Schnappschuss** zum Zeitpunkt der Erstellung. Um die
-Vorfälle, Schwachstellen und KEV-Daten zu aktualisieren:
+Das Dashboard enthält einen **Daten-Schnappschuss**. Veraltete Daten erkennt man an der
+Status-Anzeige unten links in der Seitenleiste.
 
-- **Windows:** `aktualisieren.bat` doppelklicken
-- **macOS/Linux:** `python3 update_data.py` ausführen
+### Empfohlen: Ein-Klick-Starter (aktualisiert bei jedem Start)
 
-Danach die Seite im Browser neu laden (F5). Benötigt Python 3 (nur Standardbibliothek) und
-Internetzugang. Das Skript ruft die Quellen browser-ähnlich ab; fällt eine Quelle aus
-(z. B. Bot-Schutz oder die kostenlose ransomware.live-API), bleiben die anderen erhalten und das
-Skript sagt, welche Quelle betroffen ist.
+Statt `index.html` direkt zu öffnen, den Starter verwenden – er lädt zuerst die frischen Daten
+und öffnet dann das Dashboard:
+
+- **Windows:** Doppelklick auf **`Dashboard starten.bat`**
+- **macOS/Linux:** **`dashboard-starten.command`** ausführen
+
+So sind die Daten bei jedem Öffnen aktuell. Benötigt Python 3 (nur Standardbibliothek) und
+Internetzugang.
+
+### Nur aktualisieren (ohne Öffnen)
+
+- **Windows:** `aktualisieren.bat` · **macOS/Linux:** `python3 update_data.py`
+- danach die Seite im Browser neu laden (F5)
+
+Das Skript ruft die Quellen browser-ähnlich ab; fällt eine Quelle aus (z. B. Bot-Schutz oder die
+kostenlose ransomware.live-API), bleiben die anderen erhalten und das Skript sagt, welche Quelle
+betroffen ist.
+
+### Warum kein reines JavaScript im Browser?
+
+Naheliegend wäre, die Daten direkt beim Seitenaufruf per JavaScript live nachzuladen. Das geht
+bei einer lokal geöffneten Datei (`file://`) leider **nicht zuverlässig**: Die Datenquellen
+senden keine CORS-Freigabe (`Access-Control-Allow-Origin`), daher blockiert der Browser aus
+Sicherheitsgründen den direkten Zugriff aus einer lokalen Seite. Deshalb übernimmt das kleine
+Python-Skript den Abruf – das läuft vollständig lokal auf dem Rechner und ist der robuste Weg.
+Der Ein-Klick-Starter kapselt genau das: aktualisieren **und** öffnen in einem Schritt.
 
 **Manueller Notnagel:** Falls eine Quelle das Skript hartnäckig blockt, lassen sich in der Sektion
 „Quellen & Daten" die JSON-Rohdaten direkt im Browser öffnen, speichern und per Drag & Drop ins
@@ -174,7 +195,9 @@ data_actors.js        Profile der Ransomware-Gruppen (TTPs, Tools)   – von Han
 data_knowledge.js     Erklärungen der Angriffsmethoden & Einordnung  – von Hand gepflegt
 data_secinsider.js    Chronik benannter Fälle (Security-Insider)      – von Hand gepflegt
 update_data.py        Lädt security-incidents.de, CERT-Bund, ransomware.live und CISA KEV
-aktualisieren.bat     Windows-Starter für das Update
+Dashboard starten.bat    Ein-Klick-Starter (Windows): aktualisiert und öffnet das Dashboard
+dashboard-starten.command Ein-Klick-Starter (macOS/Linux)
+aktualisieren.bat     Windows-Starter nur für das Update
 docs/screenshots/     Screenshots für dieses README
 ```
 
