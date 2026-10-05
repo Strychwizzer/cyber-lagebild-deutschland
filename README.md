@@ -168,9 +168,23 @@ Internetzugang.
 - **Windows:** `aktualisieren.bat` · **macOS/Linux:** `python3 update_data.py`
 - danach die Seite im Browser neu laden (F5)
 
-Das Skript ruft die Quellen browser-ähnlich ab; fällt eine Quelle aus (z. B. Bot-Schutz oder die
-kostenlose ransomware.live-API), bleiben die anderen erhalten und das Skript sagt, welche Quelle
-betroffen ist.
+Das Skript ruft die Quellen browser-ähnlich ab; fällt eine Quelle aus (z. B. Bot-Schutz), bleiben
+die anderen erhalten und das Skript sagt, welche Quelle betroffen ist.
+
+### ransomware.live: optionaler API-Token
+
+Die frühere kostenlose JSON-API von ransomware.live (`/v2/...`) ist abgeschaltet. Das Skript holt
+die Ransomware-Daten daher auf zwei Wegen:
+
+1. **Mit PRO-API-Token (empfohlen, schnell & zuverlässig):** Einen kostenlosen Token unter
+   [my.ransomware.live](https://my.ransomware.live/) erzeugen und entweder
+   - in die Datei `ransomware_token.txt` schreiben (eine Zeile, siehe `ransomware_token.txt.example`), oder
+   - als Umgebungsvariable `RANSOMWARE_LIVE_TOKEN` setzen.
+2. **Ohne Token:** Das Skript liest die öffentliche HTML-Länderseite als Fallback.
+
+> **Sicherheit:** Der Token ist ein Geheimnis. `ransomware_token.txt` ist per `.gitignore`
+> ausgeschlossen und wird **nicht** ins Repository eingecheckt. Im Portal lässt er sich jederzeit
+> zurücksetzen.
 
 ### Warum kein reines JavaScript im Browser?
 

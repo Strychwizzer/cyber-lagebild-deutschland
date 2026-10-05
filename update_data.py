@@ -5,20 +5,22 @@ Aktualisiert data.js für das Cyber-Lagebild-Dashboard.
 Quellen:
   - security-incidents.de  (Sicherheitsvorfall-Datenbank, JSON-Endpunkt der Tabelle)
   - wid.cert-bund.de       (BSI CERT-Bund WID, öffentliche Kurzinformationen)
-  - ransomware.live        (Ransomware-Opfer mit DE-Bezug, v2-API)
+  - ransomware.live        (Ransomware-Opfer mit DE-Bezug; PRO-API mit Token, sonst HTML)
 
 Aufruf:  python update_data.py      (nur Python 3 Standardbibliothek nötig)
 Danach index.html im Browser neu laden.
 
-Hinweis: ransomware.live/api liefert zeitweise keine Daten (dann bleibt der
-bestehende data_ransomware.js-Schnappschuss erhalten). Die Actor-Profile in
-data_actors.js und data_knowledge.js werden bewusst NICHT überschrieben.
+Hinweis: Fuer ransomware.live wird ein PRO-API-Token genutzt, falls vorhanden
+(Datei ransomware_token.txt oder Umgebungsvariable RANSOMWARE_LIVE_TOKEN).
+Ohne Token dient die HTML-Laenderseite als Fallback. Die Actor-Profile in
+data_actors.js und data_knowledge.js werden bewusst NICHT ueberschrieben.
 """
 import json, ssl, sys, gzip, io, urllib.request, urllib.error, datetime, collections, os
 
 INC_URL = "https://www.security-incidents.de/sicherheitsvorfall-datenbank/?cmd=getIncidents"
 ADV_URL = "https://wid.cert-bund.de/content/public/securityAdvisory?size=1000&sort=published%2Cdesc&aboFilter=false"
-RL_URL  = "https://api.ransomware.live/v2/countryvictims/DE"
+RL_API  = "https://api-pro.ransomware.live/victims/?country=DE"  # bevorzugt, wenn API-Token vorhanden
+RL_HTML = "https://www.ransomware.live/map/DE"                    # Fallback ohne Token (freie v2-API ist tot)
 KEV_URL = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
 # Echter Browser-User-Agent – manche Server (Bot-Schutz) liefern sonst HTML statt JSON.
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -31,7 +33,7 @@ COUNTRY = "DE"          # Land, dessen Einzelvorfälle in die Tabelle kommen
 ADV_KEEP = 400          # Anzahl CERT-Bund-Meldungen für die Tabelle
 
 
-def get_json(url, referer=None):
+def get_json(url, referer=None, extra_headers=None):
     """Holt JSON wie ein Browser (gzip + realistische Header). Wirft bei Nicht-JSON
     eine aussagekräftige Meldung mit Textauszug statt eines kryptischen Parsefehlers."""
     headers = {
@@ -44,6 +46,8 @@ def get_json(url, referer=None):
     }
     if referer:
         headers["Referer"] = referer
+    if extra_headers:
+        headers.update(extra_headers)
     req = urllib.request.Request(url, headers=headers)
     ctx = ssl.create_default_context()
     try:
@@ -58,6 +62,28 @@ def get_json(url, referer=None):
         snippet = " ".join(text[:160].split()) or "(leere Antwort)"
         raise RuntimeError(f"Kein JSON von {url} – Antwort beginnt mit: {snippet!r}")
     return json.loads(text)
+
+
+def get_text(url, referer=None):
+    """Holt eine HTML-/Textseite wie ein Browser (gzip + realistische Header)."""
+    headers = {
+        "User-Agent": UA,
+        "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
+        "Accept-Language": "de-DE,de;q=0.9,en;q=0.8",
+        "Accept-Encoding": "gzip, deflate",
+        "Connection": "close",
+    }
+    if referer:
+        headers["Referer"] = referer
+    req = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=90, context=ssl.create_default_context()) as r:
+            raw = r.read()
+            if (r.headers.get("Content-Encoding") or "").lower() == "gzip":
+                raw = gzip.decompress(raw)
+            return raw.decode("utf-8", "replace")
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f"HTTP {e.code} von {url}")
 
 
 def main():
@@ -153,25 +179,88 @@ def update_incidents_and_advisories():
     print(f"Fertig: {OUT}")
 
 
+def parse_ransomware_html(html):
+    """Zerlegt die ransomware.live-Länderseite in Opfer-Einträge.
+    Jede Opferkarte beginnt mit class="victim-title; dadurch ist jeder Block eindeutig begrenzt."""
+    import re
+    victims = []
+    parts = html.split('class="victim-title')
+    for chunk in parts[1:]:
+        c = chunk[:1600]
+        m_name = re.search(r'^[^>]*>\s*([^<]+?)\s*</a>', c)
+        m_grp = re.search(r'/group/([^"#/?]+)', c)
+        m_disc = re.search(r'Discovered:</strong>\s*(\d{4}-\d{2}-\d{2})', c)
+        m_att = re.search(r'Attack est\.:</strong>\s*(\d{4}-\d{2}-\d{2})', c)
+        if not (m_name and m_grp and m_disc):
+            continue
+        victims.append({
+            "victim": m_name.group(1).strip(),
+            "group": m_grp.group(1).lower(),
+            "discovered": m_disc.group(1),
+            "attackdate": m_att.group(1) if m_att else None,
+        })
+    return victims
+
+
+def read_rl_token():
+    """API-Token aus Umgebungsvariable RANSOMWARE_LIVE_TOKEN oder Datei ransomware_token.txt.
+    Der Token ist ein Geheimnis und wird NICHT ins Repository eingecheckt (.gitignore)."""
+    tok = os.environ.get("RANSOMWARE_LIVE_TOKEN", "").strip()
+    if tok:
+        return tok
+    f = os.path.join(HERE, "ransomware_token.txt")
+    if os.path.exists(f):
+        with open(f, encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    return line
+    return ""
+
+
+def fetch_ransomware_api(token):
+    """Offizielle PRO-API (schnell & zuverlässig). Liefert normalisierte Opfer-Dicts."""
+    j = get_json(RL_API, referer="https://www.ransomware.live/", extra_headers={"X-Api-Key": token})
+    vs = j.get("victims") or []
+    out = []
+    for v in vs:
+        out.append({
+            "victim": v.get("victim") or v.get("post_title") or "?",
+            "group": (v.get("group") or "").lower(),
+            "discovered": (v.get("discovered") or "")[:10],
+            "attackdate": (v.get("attackdate") or "")[:10] or None,
+        })
+    return out
+
+
 def update_ransomware():
-    """Aktualisiert data_ransomware.js (Opferzahlen & Monatsverlauf) aus der v2-API.
-    Die Gruppenprofile (data_actors.js) bleiben unberührt – sie werden von Hand gepflegt."""
-    print("Lade Ransomware-Opfer (ransomware.live) …")
-    victims = get_json(RL_URL, referer="https://www.ransomware.live/")
-    if not isinstance(victims, list) or not victims:
-        raise RuntimeError("leere/ungültige Antwort von ransomware.live")
+    """Aktualisiert data_ransomware.js (Opferzahlen & Monatsverlauf).
+    Nutzt die offizielle PRO-API, wenn ein Token vorliegt, sonst die HTML-Länderseite.
+    Die Gruppenprofile (data_actors.js) bleiben unberührt – von Hand gepflegt."""
+    token = read_rl_token()
+    victims = None
+    if token:
+        print("Lade Ransomware-Opfer (ransomware.live PRO-API) …")
+        try:
+            victims = fetch_ransomware_api(token)
+        except Exception as e:
+            print(f"  PRO-API fehlgeschlagen ({e}) – versuche HTML-Seite …")
+    if not victims:
+        print("Lade Ransomware-Opfer (ransomware.live, HTML) …")
+        victims = parse_ransomware_html(get_text(RL_HTML, referer="https://www.ransomware.live/"))
+    if len(victims) < 50:
+        raise RuntimeError(f"nur {len(victims)} Opfer erkannt – Quelle/Format evtl. geändert")
 
     def gkey(v):  # Datum: attackdate bevorzugt, sonst discovered
-        d = (v.get("attackdate") or v.get("discovered") or v.get("published") or "")[:10]
-        return d
+        return (v.get("attackdate") or v.get("discovered") or "")[:10]
 
     by_month, groups = collections.Counter(), {}
     rows = []
     cut12 = (datetime.date.today() - datetime.timedelta(days=365)).isoformat()
     for v in victims:
-        g = (v.get("group") or v.get("group_name") or "").lower()
+        g = (v.get("group") or "").lower()
         d = gkey(v)
-        name = v.get("victim") or v.get("post_title") or "?"
+        name = v.get("victim") or "?"
         if d:
             by_month[d[:7]] += 1
         gr = groups.setdefault(g, {"de": 0, "de12": 0, "months": collections.Counter(), "latest": []})

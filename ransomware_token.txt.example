@@ -1,0 +1,5 @@
+# Optionaler API-Token fuer ransomware.live PRO (https://my.ransomware.live/)
+# Datei in "ransomware_token.txt" umbenennen und den Token hier einfuegen (eine Zeile).
+# Alternativ Umgebungsvariable RANSOMWARE_LIVE_TOKEN setzen.
+# OHNE Token funktioniert das Skript ueber die HTML-Seite als Fallback.
+DEIN-TOKEN-HIER
