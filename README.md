@@ -17,6 +17,7 @@ in einer Ansicht und läuft **ohne Installation direkt im Browser**.
 - [Schnellstart](#schnellstart)
 - [Was zeigt das Dashboard?](#was-zeigt-das-dashboard)
   - [1. Übersicht](#1-übersicht)
+  - [Deutschlandkarte](#deutschlandkarte)
   - [2. Bedrohungsakteure](#2-bedrohungsakteure-ransomware-gruppen)
   - [3. Aktiv ausgenutzt (CISA KEV)](#3-aktiv-ausgenutzt-cisa-kev)
   - [4. Sicherheitsvorfälle](#4-sicherheitsvorfälle)
@@ -59,6 +60,20 @@ Das Lage-Cockpit auf einen Blick:
 - **„Statistisch alle X Stunden …":** eine griffige Aussage als Gesprächseinstieg.
 - **Weitere Diagramme:** häufigste Angriffsarten, Art der Betroffenen (Unternehmen/Behörde),
   Vorfälle pro Jahr sowie die CERT-Bund-Meldungen nach Schweregrad und pro Tag.
+
+### Deutschlandkarte
+
+![Deutschlandkarte](docs/screenshots/07-deutschlandkarte.png)
+
+Zwischen Übersicht und Vorfallstabelle zeigt eine Karte die Vorfälle geografisch. Die Marker
+werden aus den Namen/Beschreibungen der Vorfälle abgeleitet (Städte- und Bundesland-Erkennung über
+ein Ortsverzeichnis) – die **Markergröße** entspricht der Zahl der Vorfälle am Ort, rote Marker
+stehen für überwiegend Ransomware. Ein **Klick auf einen Marker** filtert die Tabelle darunter auf
+diesen Ort. Rechts stehen die am stärksten betroffenen Bundesländer.
+
+> Wichtig: Nicht jeder Vorfall lässt sich verorten – viele Betroffene sind in der Quelle
+> anonymisiert (z. B. „IT-Dienstleister"). Die Karte zeigt ehrlich an, wie viele der Vorfälle einem
+> Ort zugeordnet werden konnten.
 
 ### 2. Bedrohungsakteure (Ransomware-Gruppen)
 
@@ -124,6 +139,8 @@ CVSS-Score, zugehörige CVEs (verlinkt zur NVD) und Status. Ein Klick öffnet di
 | Chronik benannter Fälle 2026 | [Security-Insider](https://www.security-insider.de/cyberangriffe-auf-deutsche-unternehmen-2026-aktuell-a-a5a23f3399455167641a185a6f28549b/) (Vogel IT-Medien) |
 | Aktiv ausgenutzte Lücken | [CISA Known Exploited Vulnerabilities](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) |
 | Erklärung der Angriffsmethoden | [MITRE ATT&CK](https://attack.mitre.org/) |
+| Kartenumriss Bundesländer | [isellsoap/deutschlandGeoJSON](https://github.com/isellsoap/deutschlandGeoJSON) |
+| Städtekoordinaten | [lutangar/cities.json](https://github.com/lutangar/cities.json) |
 
 Bitte bei Präsentationen die jeweilige Quelle nennen. Viele kleinere Betroffene sind in den
 Quelldatenbanken bereits anonymisiert (z. B. „IT-Dienstleister").
@@ -191,6 +208,7 @@ index.html            Das Dashboard (Struktur, Stil, Logik in einer Datei)
 data.js               Vorfälle & CERT-Bund-Schwachstellen      (Update-Skript überschreibt)
 data_ransomware.js    Ransomware-Opfer & Gruppen-Statistik     (Update-Skript überschreibt)
 data_kev.js           CISA KEV – aktiv ausgenutzte Lücken       (Update-Skript überschreibt)
+data_geo.js           Deutschlandkarte (Bundesländer-Umrisse + Städte-Koordinaten) – statisch
 data_actors.js        Profile der Ransomware-Gruppen (TTPs, Tools)   – von Hand gepflegt
 data_knowledge.js     Erklärungen der Angriffsmethoden & Einordnung  – von Hand gepflegt
 data_secinsider.js    Chronik benannter Fälle (Security-Insider)      – von Hand gepflegt

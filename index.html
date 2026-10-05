@@ -174,6 +174,24 @@ td.name small{display:block;font-weight:500;color:var(--fg-dim);font-size:11px}
 
 .nmb{filter:blur(8px)}
 
+/* Deutschlandkarte */
+.mapwrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:center}
+@media (max-width:900px){.mapwrap{grid-template-columns:1fr}}
+.mapbox{display:flex;justify-content:center;align-items:center;min-height:300px}
+.mapbox svg{display:block;height:470px;width:auto;max-width:100%}
+@media (max-width:900px){.mapbox svg{height:auto;width:70%}}
+.mapbox .state{fill:#141f33;stroke:#2b4570;stroke-width:.8;transition:fill .15s}
+.mapbox .state:hover{fill:#1a2942}
+.mapbox .mk{cursor:pointer}
+.mapbox .mk circle{fill:url(#mkg);stroke:#04140e;stroke-width:.6;transition:transform .12s}
+.mapbox .mk:hover circle{stroke:#2aebcb;stroke-width:1.4}
+.mapbox .mk.ransom circle{fill:url(#mkr)}
+.mapbox .mk text{fill:#04140e;font-weight:800;font-size:9px;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.mapside .mapstat{display:flex;flex-direction:column;gap:2px;margin-bottom:4px}
+.mapside .mapstat b{font-size:34px;font-weight:800;letter-spacing:-.03em;color:var(--accent2)}
+.mapside .mapstat span{font-size:12px;color:var(--fg-muted)}
+.mapside h5{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-dim)}
+
 /* Akteurs-Karten */
 .actorgrid{grid-template-columns:repeat(4,1fr)}
 @media (max-width:1300px){.actorgrid{grid-template-columns:repeat(3,1fr)}}
@@ -334,6 +352,25 @@ body.present .top .search{display:none}
         <div id="dayChart"></div>
       </div>
     </div>
+
+    <div class="card" style="margin-top:18px">
+      <div class="card-h">
+        <div><h3>Vorfälle auf der Deutschlandkarte</h3><div class="hint" id="mapHint">geografisch zugeordnete Sicherheitsvorfälle</div></div>
+        <div class="chips" id="mapRange">
+          <button class="chip" data-r="90">90 Tage</button><button class="chip" data-r="365">12 Monate</button><button class="chip on" data-r="0">Alle</button>
+        </div>
+      </div>
+      <div class="mapwrap">
+        <div class="mapbox"><div id="mapSvg"></div></div>
+        <div class="mapside">
+          <div class="mapstat"><b class="num" id="mapLocated">–</b><span>von <span id="mapTotal">–</span> Vorfällen verortet</span></div>
+          <div class="hint" style="margin:2px 0 12px">Marker-Größe = Anzahl Vorfälle am Ort. Klick auf einen Marker filtert die Tabelle darunter.</div>
+          <h5 style="margin:0 0 8px">Am stärksten betroffen</h5>
+          <div id="mapTopStates"></div>
+          <div class="hint" style="margin-top:14px">Viele Betroffene sind in der Quelle anonymisiert (z.&nbsp;B. „IT-Dienstleister") und lassen sich keinem Ort zuordnen.</div>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- ============ VORFÄLLE ============ -->
@@ -472,6 +509,7 @@ body.present .top .search{display:none}
 <script src="data_knowledge.js"></script>
 <script src="data_secinsider.js"></script>
 <script src="data_kev.js"></script>
+<script src="data_geo.js"></script>
 <script>
 "use strict";
 /* ------------------------------------------------------------------ Daten */
@@ -734,11 +772,11 @@ function togglePresent(){
   $("btnPresent").classList.toggle("on", on);
   if (on && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
   if (!on && document.fullscreenElement) document.exitFullscreen();
-  setTimeout(()=>{renderMonths(); renderOverview(); renderActors(); renderRansomMonths(); renderKev();}, 250);
+  setTimeout(()=>{renderMonths(); renderOverview(); renderActors(); renderRansomMonths(); renderKev(); renderMap();}, 250);
 }
 $("btnPresent").onclick = togglePresent;
 $("navPresent").onclick = e=>{e.preventDefault();togglePresent()};
-document.addEventListener("fullscreenchange",()=>{ if(!document.fullscreenElement && document.body.classList.contains("present")){document.body.classList.remove("present");$("btnPresent").classList.remove("on");setTimeout(()=>{renderMonths();renderOverview();renderActors();renderRansomMonths();renderKev()},250)} });
+document.addEventListener("fullscreenchange",()=>{ if(!document.fullscreenElement && document.body.classList.contains("present")){document.body.classList.remove("present");$("btnPresent").classList.remove("on");setTimeout(()=>{renderMonths();renderOverview();renderActors();renderRansomMonths();renderKev();renderMap()},250)} });
 
 $("navBlur").onclick = e=>{e.preventDefault(); const on=document.body.classList.toggle("blurnames"); $("incWrap").classList.toggle("blur",on); $("blurLbl").textContent = on?"Namen einblenden":"Namen ausblenden"; document.querySelectorAll(".ticker .nm").forEach(n=>n.style.filter=on?"blur(6px)":"");};
 
@@ -751,7 +789,7 @@ document.querySelectorAll("main section").forEach(s=>io.observe(s));
 
 setInterval(()=>{$("clock").textContent=new Date().toLocaleTimeString("de-DE")},1000);
 $("clock").textContent=new Date().toLocaleTimeString("de-DE");
-let rz; window.addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{renderMonths();renderOverview();renderActors();renderRansomMonths();renderKev()},200)});
+let rz; window.addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{renderMonths();renderOverview();renderActors();renderRansomMonths();renderKev();renderMap()},200)});
 
 /* ----------------------------------------------- JSON-Import (Drag&Drop) */
 function buildHistory(all){
@@ -993,8 +1031,72 @@ $("kevFilter").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;$("kev
 $("kevPrev").onclick=()=>{kevState.page--;renderKevTable()}; $("kevNext").onclick=()=>{kevState.page++;renderKevTable()};
 $("kevBody").onclick=e=>{const tr=e.target.closest("tr[data-cve]");if(tr)window.open("https://www.cisa.gov/known-exploited-vulnerabilities-catalog?search_api_fulltext="+encodeURIComponent(tr.dataset.cve),"_blank","noopener")};
 
+/* ============================================ DEUTSCHLANDKARTE */
+const GEO = window.GEO || {states:[],cities:{},centroids:{},bundeslaender:[],viewBox:"0 0 800 1084"};
+const GEO_STATES = new Set((GEO.bundeslaender||[]).map(s=>s.toLowerCase()));
+function* geoNgrams(t){
+  const w=(t||"").match(/[A-Za-zÄÖÜäöüß]{2,}/g)||[];
+  for(const n of [3,2,1]) for(let i=0;i+n<=w.length;i++) yield w.slice(i,i+n).join(" ");
+}
+// ordnet einen Vorfall einem Ort zu → {x,y,label,bundesland,level} oder null
+function geocodeIncident(x){
+  const hay = (x.name||"")+" "+(x.text||"");
+  for(const g of geoNgrams(hay)){ const c=GEO.cities[g.toLowerCase()];
+    if(c) return {x:c[0],y:c[1],label:g,bundesland:c[2]||"",level:"city"}; }
+  for(const g of geoNgrams(hay)){ const k=g.toLowerCase();
+    if(GEO_STATES.has(k)){ const ct=GEO.centroids[g]||Object.entries(GEO.centroids).find(e=>e[0].toLowerCase()===k)?.[1];
+      if(ct) return {x:ct[0],y:ct[1],label:g,bundesland:g,level:"state"}; } }
+  return null;
+}
+let mapRange = 0;
+function renderMap(){
+  const el=$("mapSvg"); if(!el) return;
+  const pool = INC.filter(x=> !mapRange || (NOW-new Date(x.date))/864e5 <= mapRange);
+  // Cluster je Ort (gerundete Koordinate)
+  const clusters={}; let located=0;
+  const byState={};
+  pool.forEach(x=>{ const g=geocodeIncident(x); if(!g) return; located++;
+    byState[g.bundesland]=(byState[g.bundesland]||0)+1;
+    const key=g.x+","+g.y;
+    const c=clusters[key]||(clusters[key]={x:g.x,y:g.y,label:g.label,items:[],ransom:0,level:g.level});
+    c.items.push(x); if(x.tags.includes("Ransomware")) c.ransom++;
+    // schönere Beschriftung: Stadt ohne Adjektiv-Endung bevorzugen
+    if(g.level==="city" && g.label.length < c.label.length) c.label=g.label;
+  });
+  const list=Object.values(clusters);
+  const maxN=Math.max(1,...list.map(c=>c.items.length));
+  const r=n=> 4 + 7*Math.sqrt(n/maxN);
+  // leichtes Entzerren identischer Punkte entfällt – Cluster sind je Ort eindeutig
+  const markers=list.sort((a,b)=>a.items.length-b.items.length).map(c=>{
+    const rad=r(c.items.length).toFixed(1);
+    const newest=c.items.slice().sort((p,q)=>q.date.localeCompare(p.date)).slice(0,4).map(i=>`${dDE(i.date).slice(0,6)} ${esc(i.name)}`).join("<br>");
+    const title=`<b>${esc(c.label.charAt(0).toUpperCase()+c.label.slice(1))}</b> · ${c.items.length} Vorfall${c.items.length>1?'/Vorfälle':''}<br>${newest}${c.items.length>4?'<br>…':''}`;
+    return `<g class="mk ${c.ransom>c.items.length/2?'ransom':''}" data-q="${esc(c.label)}" data-tip="${title.replace(/"/g,'&quot;')}">
+      <circle cx="${c.x}" cy="${c.y}" r="${rad}"/>${c.items.length>1?`<text x="${c.x}" y="${c.y}">${c.items.length}</text>`:''}</g>`;
+  }).join("");
+  const paths=(GEO.states||[]).map(s=>`<path class="state" d="${s.d}"><title>${esc(s.name)}</title></path>`).join("");
+  el.innerHTML=`<svg viewBox="${GEO.viewBox}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><defs>
+    <radialGradient id="mkg"><stop offset="0%" stop-color="#5ff0cf"/><stop offset="100%" stop-color="#26ae7f"/></radialGradient>
+    <radialGradient id="mkr"><stop offset="0%" stop-color="#ff8f96"/><stop offset="100%" stop-color="#e7515a"/></radialGradient></defs>
+    <g>${paths}</g><g>${markers}</g></svg>`;
+  bindTip(el);
+  $("mapLocated").textContent=fmtN(located);
+  $("mapTotal").textContent=fmtN(pool.length);
+  $("mapHint").textContent=`${fmtN(located)} von ${fmtN(pool.length)} Vorfällen einem Ort zugeordnet`;
+  const top=Object.entries(byState).filter(e=>e[0]).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const tmax=top[0]?.[1]||1;
+  $("mapTopStates").innerHTML=top.map(([s,n])=>`<div class="hbar" data-tip="<b>${esc(s)}</b><br>${fmtN(n)} Vorfälle"><span class="hl">${esc(s)}</span><span class="tr"><span class="fl" data-w="${n/tmax*100}"></span></span><span class="n num">${fmtN(n)}</span></div>`).join("") || '<div class="hint">–</div>';
+  requestAnimationFrame(()=>setTimeout(()=>$("mapTopStates").querySelectorAll(".fl").forEach(f=>f.style.width=f.dataset.w+"%"),60));
+  bindTip($("mapTopStates"));
+}
+$("mapRange").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;$("mapRange").querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c===b));mapRange=+b.dataset.r;renderMap()};
+$("mapSvg").onclick=e=>{const g=e.target.closest(".mk[data-q]");if(!g)return;
+  const q=g.dataset.q; $("incSearch").value=q; incState.q=q; incState.range=0; $("incRange").value="0"; incState.type=""; $("incType").value="";
+  incState.tag=""; $("incTags").querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c.dataset.t===""));
+  incState.page=0; renderInc(); document.getElementById("incidents").scrollIntoView({behavior:"smooth"});};
+
 /* --------------------------------------------------------------- Start */
-function renderAll(){ renderMonths(); renderOverview(); renderInc(); renderAdv(); renderActors(); renderRansomMonths(); renderKev(); }
+function renderAll(){ renderMonths(); renderOverview(); renderInc(); renderAdv(); renderActors(); renderRansomMonths(); renderKev(); renderMap(); }
 loadData(); renderAll();
 </script>
 </body>
