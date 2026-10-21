@@ -14,12 +14,13 @@ in einer Ansicht und läuft **ohne Installation direkt im Browser**.
 
 ## Inhalt
 
+- [Funktionsüberblick – was ist drin und wo?](#funktionsüberblick--was-ist-drin-und-wo)
 - [Schnellstart](#schnellstart)
 - [Was zeigt das Dashboard?](#was-zeigt-das-dashboard)
   - [1. Übersicht](#1-übersicht)
   - [Deutschlandkarte](#deutschlandkarte)
   - [2. Bedrohungsakteure](#2-bedrohungsakteure-ransomware-gruppen)
-  - [3. Aktiv ausgenutzt (CISA KEV)](#3-aktiv-ausgenutzt-cisa-kev)
+  - [3. Aktiv ausgenutzt (CISA KEV) + Exploit-Markierung](#3-aktiv-ausgenutzt-cisa-kev)
   - [4. Sicherheitsvorfälle](#4-sicherheitsvorfälle)
   - [5. Schwachstellen (CERT-Bund)](#5-schwachstellen-cert-bund)
 - [Datenquellen](#datenquellen)
@@ -28,6 +29,30 @@ in einer Ansicht und läuft **ohne Installation direkt im Browser**.
 - [Projektstruktur](#projektstruktur)
 - [Technik](#technik)
 - [Haftungsausschluss](#haftungsausschluss)
+
+---
+
+## Funktionsüberblick – was ist drin und wo?
+
+Alle Bereiche sind links über die **Seitenleiste** erreichbar.
+
+| Bereich (Seitenleiste) | Was man dort findet |
+| --- | --- |
+| **Übersicht** | Kennzahlen (Vorfälle DE, pro Woche, Ransomware-Anteil, BSI-Meldungen), Monatsverlauf, Angriffsarten, Betroffene, CERT-Bund-Schweregrade → [Details](#1-übersicht) |
+| **↳ Deutschlandkarte** | In der Übersicht, zwischen den Diagrammen und der Vorfalltabelle: Vorfälle als Marker auf der Karte, Klick filtert die Tabelle → [Details](#deutschlandkarte) |
+| **Bedrohungsakteure** | Aktivste Ransomware-Gruppen gegen DE; Klick auf eine Karte öffnet ein Profil mit Vorgehen (MITRE ATT&CK), Werkzeugen und Schutz-Fazit → [Details](#2-bedrohungsakteure-ransomware-gruppen) |
+| **Aktiv ausgenutzt (KEV)** | CISA-KEV mit Ransomware-Flag, **„Exploit"-Markierung** (Exploit-DB), **Sploitus-Lupe** je CVE und Filter **„Mit Exploit"** → [Details](#3-aktiv-ausgenutzt-cisa-kev) |
+| **Sicherheitsvorfälle** | Tabelle benannter DE-Vorfälle mit Suche und Filtern → [Details](#4-sicherheitsvorfälle) |
+| **Schwachstellen (CERT-Bund)** | Aktuelle BSI-/CVE-Meldungen, ebenfalls mit Exploit-Markierung und Sploitus-Lupe → [Details](#5-schwachstellen-cert-bund) |
+| **Quellen & Daten** | Alle Quellen, Datenstand, Aktualisieren und Drag-&-Drop-Import |
+
+**Zuletzt ergänzt (Changelog):**
+
+- **Deutschlandkarte** mit verorteten Vorfällen (in der Übersicht) – [ansehen](#deutschlandkarte)
+- **Ein-Klick-Starter** `Dashboard starten.bat`, der beim Öffnen die Daten aktualisiert – [ansehen](#daten-aktualisieren)
+- **ransomware.live PRO-API** (mit optionalem Token) statt der abgeschalteten Gratis-API – [ansehen](#ransomwarelive-optionaler-api-token)
+- **Exploit-Markierung** je CVE aus **Exploit-DB** + Filter „Mit Exploit" (KEV & CERT-Bund) – [ansehen](#3-aktiv-ausgenutzt-cisa-kev)
+- **Sploitus-Lupe** je CVE für die manuelle Exploit-Recherche – [ansehen](#3-aktiv-ausgenutzt-cisa-kev)
 
 ---
 
@@ -112,7 +137,11 @@ nachweislich bei echten Angriffen ausgenutzt werden. Entscheidend ist hier die K
 - durchsuchbare Tabelle mit Umschalter „Nur Ransomware / Mit Exploit / Alle KEV", CVE-Link zur NVD
   und einer klaren **„Ja"-Markierung** für Ransomware-Vektoren
 
-**Öffentliche Exploits:** CVEs, für die in [Exploit-DB](https://www.exploit-db.com/) ein
+**Öffentliche Exploits:**
+
+![Exploit-Markierung und Sploitus-Lupe](docs/screenshots/08-exploit-sploitus.png)
+
+CVEs, für die in [Exploit-DB](https://www.exploit-db.com/) ein
 öffentlicher Exploit vorliegt, tragen eine rote **„Exploit"-Markierung** (Link zur Exploit-DB-Suche).
 Das hilft bei der Priorisierung: aktiv ausgenutzt **und** öffentlich exploitbar = sofort patchen.
 Der Filter **„Mit Exploit"** zeigt genau diese Lücken, und die Kopfzeile nennt, wie viele es sind.
