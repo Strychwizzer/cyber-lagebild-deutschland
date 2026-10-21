@@ -54,6 +54,8 @@ Alle Bereiche sind links über die **Seitenleiste** erreichbar.
 - **Exploit-Markierung** je CVE aus **Exploit-DB** + Filter „Mit Exploit" (KEV & CERT-Bund) – [ansehen](#3-aktiv-ausgenutzt-cisa-kev)
 - **Sploitus-Lupe** je CVE für die manuelle Exploit-Recherche – [ansehen](#3-aktiv-ausgenutzt-cisa-kev)
 
+> Vollständige, datierte Versionshistorie: **[CHANGELOG.md](CHANGELOG.md)**
+
 ---
 
 ## Schnellstart
