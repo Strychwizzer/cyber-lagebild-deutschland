@@ -109,8 +109,17 @@ nachweislich bei echten Angriffen ausgenutzt werden. Entscheidend ist hier die K
 - **Hersteller-Ranking:** über welche Produkte Ransomware am häufigsten eindringt
   (typische Einfallstore: VPNs, Firewalls, Fileserver, SharePoint)
 - Jahresverlauf (alle KEV vs. davon von Ransomware genutzt)
-- durchsuchbare Tabelle mit Umschalter „Nur Ransomware / Alle KEV", CVE-Link zur NVD und einer
-  klaren **„Ja"-Markierung** für Ransomware-Vektoren
+- durchsuchbare Tabelle mit Umschalter „Nur Ransomware / Mit Exploit / Alle KEV", CVE-Link zur NVD
+  und einer klaren **„Ja"-Markierung** für Ransomware-Vektoren
+
+**Öffentliche Exploits:** CVEs, für die in [Exploit-DB](https://www.exploit-db.com/) ein
+öffentlicher Exploit vorliegt, tragen eine rote **„Exploit"-Markierung** (Link zur Exploit-DB-Suche).
+Das hilft bei der Priorisierung: aktiv ausgenutzt **und** öffentlich exploitbar = sofort patchen.
+Der Filter **„Mit Exploit"** zeigt genau diese Lücken, und die Kopfzeile nennt, wie viele es sind.
+Für die manuelle Recherche ist zusätzlich [Sploitus](https://sploitus.com/) in den Quellen verlinkt.
+
+> Es wird ausschließlich die **Verfügbarkeit** eines Exploits angezeigt (ja/nein) – es wird **kein
+> Exploit-Code** geladen, gespeichert oder dargestellt. Gespeichert sind nur CVE-Kennungen.
 
 ### 4. Sicherheitsvorfälle
 
@@ -138,6 +147,7 @@ CVSS-Score, zugehörige CVEs (verlinkt zur NVD) und Status. Ein Klick öffnet di
 | Ransomware-Gruppen, Opfer, TTPs | [ransomware.live](https://www.ransomware.live/) |
 | Chronik benannter Fälle 2026 | [Security-Insider](https://www.security-insider.de/cyberangriffe-auf-deutsche-unternehmen-2026-aktuell-a-a5a23f3399455167641a185a6f28549b/) (Vogel IT-Medien) |
 | Aktiv ausgenutzte Lücken | [CISA Known Exploited Vulnerabilities](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) |
+| Öffentliche Exploits (Verfügbarkeit) | [Exploit-DB](https://www.exploit-db.com/) · [Sploitus](https://sploitus.com/) |
 | Erklärung der Angriffsmethoden | [MITRE ATT&CK](https://attack.mitre.org/) |
 | Kartenumriss Bundesländer | [isellsoap/deutschlandGeoJSON](https://github.com/isellsoap/deutschlandGeoJSON) |
 | Städtekoordinaten | [lutangar/cities.json](https://github.com/lutangar/cities.json) |
@@ -222,6 +232,7 @@ index.html            Das Dashboard (Struktur, Stil, Logik in einer Datei)
 data.js               Vorfälle & CERT-Bund-Schwachstellen      (Update-Skript überschreibt)
 data_ransomware.js    Ransomware-Opfer & Gruppen-Statistik     (Update-Skript überschreibt)
 data_kev.js           CISA KEV – aktiv ausgenutzte Lücken       (Update-Skript überschreibt)
+data_exploits.js      Exploit-Verfügbarkeit je CVE (nur Kennungen)   (Update-Skript überschreibt)
 data_geo.js           Deutschlandkarte (Bundesländer-Umrisse + Städte-Koordinaten) – statisch
 data_actors.js        Profile der Ransomware-Gruppen (TTPs, Tools)   – von Hand gepflegt
 data_knowledge.js     Erklärungen der Angriffsmethoden & Einordnung  – von Hand gepflegt

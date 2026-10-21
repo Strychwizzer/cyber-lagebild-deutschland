@@ -158,6 +158,8 @@ td.name small{display:block;font-weight:500;color:var(--fg-dim);font-size:11px}
 .cve{font-family:var(--mono);font-size:11px;color:var(--fg-muted);display:block;white-space:nowrap}
 .st{font-size:11px;font-weight:700;color:var(--accent2)}
 .st.UPDATE{color:var(--fg-dim)}
+.exbadge{display:inline-flex;align-items:center;gap:3px;margin-left:6px;font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px;background:#e7515a22;color:#ff6b74;white-space:nowrap;vertical-align:middle}
+.exbadge:hover{background:#e7515a33;text-decoration:none}
 .pager{display:flex;align-items:center;justify-content:space-between;margin-top:12px;color:var(--fg-dim);font-size:12px}
 .pager .btn{padding:5px 10px}
 .empty{padding:30px;text-align:center;color:var(--fg-dim)}
@@ -458,7 +460,7 @@ body.present .top .search{display:none}
       <div class="toolbar">
         <input class="tsearch" id="kevSearch" placeholder="CVE, Hersteller oder Produkt …">
         <div class="chips" id="kevFilter">
-          <button class="chip on" data-f="ransom">Nur Ransomware</button><button class="chip" data-f="all">Alle KEV</button>
+          <button class="chip on" data-f="ransom">Nur Ransomware</button><button class="chip" data-f="exploit">Mit Exploit</button><button class="chip" data-f="all">Alle KEV</button>
         </div>
         <div style="flex:1"></div>
         <span class="hint" id="kevStand"></span>
@@ -481,7 +483,8 @@ body.present .top .search{display:none}
           <b>Schwachstellen:</b> <a href="https://wid.cert-bund.de/portal/wid/kurzinformationen" target="_blank" rel="noopener">BSI CERT-Bund – Warn- und Informationsdienst (WID)</a>, öffentliche Kurzinformationen.<br><br>
           <b>Ransomware-Gruppen &amp; Opfer:</b> <a href="https://www.ransomware.live/" target="_blank" rel="noopener">ransomware.live</a> – überwacht die Leak-Seiten der Ransomware-Gruppen. Methoden/TTPs nach <a href="https://attack.mitre.org/" target="_blank" rel="noopener">MITRE ATT&amp;CK</a>, Crocodyli und der Ransomware-Tool-Matrix.<br><br>
           <b>Chronik benannter Fälle:</b> <a href="https://www.security-insider.de/cyberangriffe-auf-deutsche-unternehmen-2026-aktuell-a-a5a23f3399455167641a185a6f28549b/" target="_blank" rel="noopener">Security-Insider – „Cyberangriffe auf Unternehmen in Deutschland 2026"</a> (Vogel IT-Medien).<br><br>
-          <b>Aktiv ausgenutzte Lücken:</b> <a href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog" target="_blank" rel="noopener">CISA Known Exploited Vulnerabilities (KEV)</a> – Schwachstellen mit nachgewiesener Ausnutzung, inkl. Kennzeichnung zur Ransomware-Nutzung.
+          <b>Aktiv ausgenutzte Lücken:</b> <a href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog" target="_blank" rel="noopener">CISA Known Exploited Vulnerabilities (KEV)</a> – Schwachstellen mit nachgewiesener Ausnutzung, inkl. Kennzeichnung zur Ransomware-Nutzung.<br><br>
+          <b>Öffentliche Exploits:</b> <a href="https://www.exploit-db.com/" target="_blank" rel="noopener">Exploit-DB</a> (Markierung „Exploit" bei CVEs mit öffentlichem Eintrag) und <a href="https://sploitus.com/" target="_blank" rel="noopener">Sploitus</a> für die manuelle Suche. Es wird nur die Verfügbarkeit angezeigt – kein Exploit-Code.
         </p>
         <p class="hint" id="dataStand"></p>
       </div>
@@ -510,6 +513,7 @@ body.present .top .search{display:none}
 <script src="data_secinsider.js"></script>
 <script src="data_kev.js"></script>
 <script src="data_geo.js"></script>
+<script src="data_exploits.js"></script>
 <script>
 "use strict";
 /* ------------------------------------------------------------------ Daten */
@@ -748,7 +752,7 @@ function renderAdv(){
     <td><span class="sev ${esc(a.cls)}">${esc(a.cls)}</span></td>
     <td><div class="score"><span class="tr"><span class="fl" style="width:${a.score||0}%;background:${SEVCOL[a.cls]||'#64748b'}"></span></span>${sc.toFixed(1).replace(".",",")}</div></td>
     <td><b style="font-weight:600">${esc(a.title)}</b><span class="cve">${esc(a.name)}</span></td>
-    <td>${a.cves.map(c=>`<a class="cve" href="https://nvd.nist.gov/vuln/detail/${esc(c)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(c)}</a>`).join("")||'<span class="cve">–</span>'}</td>
+    <td>${a.cves.map(c=>`<a class="cve" href="https://nvd.nist.gov/vuln/detail/${esc(c)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(c)}</a>`).join("")||'<span class="cve">–</span>'}${a.cves.some(c=>EXPLOITS.has(c))?exploitBadge(a.cves.find(c=>EXPLOITS.has(c))):""}</td>
     <td><span class="st ${esc(a.status)}">${esc(a.status)}</span></td>
     <td class="date">${dDE(a.pub)} ${a.pub.slice(11,16)}</td></tr>`}).join("") : `<tr><td colspan="6" class="empty">Keine Meldungen für diese Auswahl.</td></tr>`;
   $("advInfo").textContent = `${fmtN(rows.length)} Meldungen · Seite ${advState.page+1} von ${pages}`;
@@ -960,6 +964,21 @@ function openActor(g){
   bindTip($("mbox"));
 }
 
+/* ============================================ EXPLOIT-VERFÜGBARKEIT (Exploit-DB) */
+const EXPLOITS = (function(){
+  const d = window.EXPLOITS || {cves:""};
+  const set = new Set((d.cves||"").split(" ").filter(Boolean));
+  return { meta:d, size:set.size, has:cve=>set.has(String(cve||"").replace(/^CVE-/i,"")) };
+})();
+// rote "Exploit"-Markierung, wenn ein öffentlicher Exploit bekannt ist; Link führt zur Exploit-DB-Suche.
+function exploitBadge(cve){
+  if(!EXPLOITS.has(cve)) return "";
+  const q=encodeURIComponent(cve);
+  return `<a class="exbadge" href="https://www.exploit-db.com/search?cve=${q}" target="_blank" rel="noopener" title="Öffentlicher Exploit bekannt – auf Exploit-DB ansehen" onclick="event.stopPropagation()"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="m13 2-3 7h5l-3 9 8-11h-5l3-5z"/></svg>Exploit</a>`;
+}
+// Sploitus-Suchlink (breitere Abdeckung) – für manuelle Prüfung einer CVE
+function sploitusLink(cve){ return `https://sploitus.com/?query=${encodeURIComponent(cve)}`; }
+
 /* ============================================ KEV (aktiv ausgenutzt) */
 const KEV = window.KEV || {rows:[],topVendorsR:[],byYear:{},ransomByYear:{},total:0,ransomTotal:0};
 // rows: [cve, dateAdded, vendor, product, name, desc, ransom(1/0), dueDate]
@@ -967,7 +986,7 @@ const kevState = {q:"", filter:"ransom", page:0};
 function kevRows(){
   const q=kevState.q.toLowerCase();
   return KEV.rows.filter(r=>
-    (kevState.filter==="all" || r[6]===1) &&
+    (kevState.filter==="all" || (kevState.filter==="exploit" ? EXPLOITS.has(r[0]) : r[6]===1)) &&
     (!q || (r[0]+" "+r[2]+" "+r[3]+" "+r[4]).toLowerCase().includes(q)))
     .sort((a,b)=>(b[1]||"").localeCompare(a[1]||""));  // neueste zuerst – so zeigt "Alle KEV" oben sofort andere Einträge
 }
@@ -990,7 +1009,8 @@ function renderKev(){
   // Jahres-Chart (gestapelt: alle vs. ransomware) – zwei Balkenreihen als Gruppen
   renderKevYears();
   $("navKev").textContent=fmtN(KEV.ransomTotal);
-  $("kevStand").textContent=KEV.version?("Katalog "+KEV.version):"";
+  const exN=KEV.rows.filter(r=>EXPLOITS.has(r[0])).length;
+  $("kevStand").innerHTML=(KEV.version?("Katalog "+KEV.version):"")+(exN?` · <span style="color:#ff6b74">${fmtN(exN)} mit öffentlichem Exploit</span>`:"");
   renderKevTable();
 }
 function renderKevYears(){
@@ -1018,7 +1038,7 @@ function renderKevTable(){
   kevState.page=Math.min(kevState.page,pages-1);
   const sl=rows.slice(kevState.page*PAGE,kevState.page*PAGE+PAGE);
   $("kevBody").innerHTML=sl.length?sl.map(r=>`<tr data-cve="${esc(r[0])}">
-    <td><a class="cve" href="https://nvd.nist.gov/vuln/detail/${esc(r[0])}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(r[0])}</a></td>
+    <td><a class="cve" href="https://nvd.nist.gov/vuln/detail/${esc(r[0])}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(r[0])}</a>${exploitBadge(r[0])}</td>
     <td class="name"><span class="nm">${esc(r[2])}</span><small>${esc(r[3])}</small></td>
     <td style="color:var(--fg-muted)">${esc(r[4])}</td>
     <td>${r[6]===1?'<span class="sev kritisch" style="gap:5px"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="m13 2-3 7h5l-3 9 8-11h-5l3-5z"/></svg>Ja</span>':'<span class="st UPDATE">–</span>'}</td>

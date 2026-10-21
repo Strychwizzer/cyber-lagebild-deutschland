@@ -22,6 +22,7 @@ ADV_URL = "https://wid.cert-bund.de/content/public/securityAdvisory?size=1000&so
 RL_API  = "https://api-pro.ransomware.live/victims/?country=DE"  # bevorzugt, wenn API-Token vorhanden
 RL_HTML = "https://www.ransomware.live/map/DE"                    # Fallback ohne Token (freie v2-API ist tot)
 KEV_URL = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
+EDB_URL = "https://gitlab.com/exploit-database/exploitdb/-/raw/main/files_exploits.csv"  # CVE<->Exploit-Zuordnung (kein Code)
 # Echter Browser-User-Agent – manche Server (Bot-Schutz) liefern sonst HTML statt JSON.
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36")
@@ -29,6 +30,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "data.js")
 OUT_RL = os.path.join(HERE, "data_ransomware.js")
 OUT_KEV = os.path.join(HERE, "data_kev.js")
+OUT_EXP = os.path.join(HERE, "data_exploits.js")
 COUNTRY = "DE"          # Land, dessen Einzelvorfälle in die Tabelle kommen
 ADV_KEEP = 400          # Anzahl CERT-Bund-Meldungen für die Tabelle
 
@@ -106,11 +108,17 @@ def main():
     except Exception as e:
         print(f"  KEV-Daten konnten nicht aktualisiert werden: {e}")
         print("  -> Der bestehende data_kev.js-Schnappschuss bleibt erhalten.")
+    try:
+        update_exploits()
+        ok += 1
+    except Exception as e:
+        print(f"  Exploit-Daten konnten nicht aktualisiert werden: {e}")
+        print("  -> Der bestehende data_exploits.js-Schnappschuss bleibt erhalten.")
     if ok == 0:
         print("\nKeine Quelle war erreichbar. Das Dashboard zeigt weiter die mitgelieferten Daten.")
         print("Pruefe die Internetverbindung oder oeffne die Quell-Links aus dem Dashboard im Browser.")
     else:
-        print(f"\n{ok}/3 Quellen aktualisiert. index.html im Browser neu laden (F5).")
+        print(f"\n{ok}/4 Quellen aktualisiert. index.html im Browser neu laden (F5).")
 
 
 def update_incidents_and_advisories():
@@ -341,6 +349,40 @@ def update_kev():
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
         f.write(";\n")
     print(f"  {len(vulns)} KEV-Einträge, {len(ransom)} von Ransomware genutzt. Fertig: {OUT_KEV}")
+
+
+def update_exploits():
+    """Aktualisiert data_exploits.js: markiert, für welche angezeigten CVEs ein öffentlicher
+    Exploit-DB-Eintrag existiert. Es werden NUR CVE-Kennungen gespeichert – KEIN Exploit-Code.
+    Gespeichert wird die Schnittmenge aus Exploit-DB und den aktuell im Dashboard gezeigten CVEs
+    (data.js + data_kev.js), damit die Datei klein bleibt."""
+    import re
+    print("Lade Exploit-Verfügbarkeit (Exploit-DB) …")
+    # im Dashboard gezeigte CVEs einsammeln
+    shown = set()
+    for path in (OUT, OUT_KEV):
+        try:
+            with open(path, encoding="utf-8") as f:
+                for m in re.finditer(r"CVE-(\d{4}-\d{4,7})", f.read()):
+                    shown.add(m.group(1))
+        except FileNotFoundError:
+            pass
+    if not shown:
+        raise RuntimeError("keine angezeigten CVEs gefunden (data.js/data_kev.js fehlen?)")
+    csv = get_text(EDB_URL, referer="https://www.exploit-db.com/")
+    have = set(re.findall(r"CVE-(\d{4}-\d{4,7})", csv))
+    if len(have) < 1000:
+        raise RuntimeError(f"nur {len(have)} CVEs aus Exploit-DB gelesen – Format evtl. geändert")
+    inter = sorted(shown & have)
+    out = {"source": "Exploit-DB",
+           "generated": datetime.date.today().isoformat(),
+           "count": len(inter),
+           "cves": " ".join(inter)}
+    with open(OUT_EXP, "w", encoding="utf-8") as f:
+        f.write("/* Automatisch erzeugt von update_data.py – Quelle: Exploit-DB (nur CVE-Kennungen, kein Code) */\nwindow.EXPLOITS = ")
+        json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
+        f.write(";\n")
+    print(f"  {len(have)} CVEs in Exploit-DB, davon {len(inter)} im Dashboard sichtbar. Fertig: {OUT_EXP}")
 
 
 if __name__ == "__main__":
