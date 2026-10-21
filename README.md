@@ -116,7 +116,14 @@ nachweislich bei echten Angriffen ausgenutzt werden. Entscheidend ist hier die K
 öffentlicher Exploit vorliegt, tragen eine rote **„Exploit"-Markierung** (Link zur Exploit-DB-Suche).
 Das hilft bei der Priorisierung: aktiv ausgenutzt **und** öffentlich exploitbar = sofort patchen.
 Der Filter **„Mit Exploit"** zeigt genau diese Lücken, und die Kopfzeile nennt, wie viele es sind.
-Für die manuelle Recherche ist zusätzlich [Sploitus](https://sploitus.com/) in den Quellen verlinkt.
+
+Zusätzlich hat **jede CVE** ein kleines **Lupen-Symbol**, das die CVE direkt bei
+[Sploitus](https://sploitus.com/) nachschlägt (breitere, aber unkuratierte Abdeckung).
+
+> **Warum ist Sploitus nur ein Link und kein automatisches Ja/Nein?** Sploitus aggregiert sehr viele
+> auto-generierte PoC-Stubs – selbst eine erfundene CVE liefert dort „Treffer". Als automatisches
+> Flag wäre das irreführend. Die verlässliche Ja/Nein-Markierung kommt daher aus der kuratierten
+> Exploit-DB; Sploitus dient der manuellen Gegenprüfung per Klick.
 
 > Es wird ausschließlich die **Verfügbarkeit** eines Exploits angezeigt (ja/nein) – es wird **kein
 > Exploit-Code** geladen, gespeichert oder dargestellt. Gespeichert sind nur CVE-Kennungen.
